@@ -1,6 +1,7 @@
 # third party modules
 import tcod
 import pygame
+import math
 
 # game files
 import constants
@@ -116,6 +117,23 @@ class obj_Actor:
                         self.sprite_image += 1
 
                 SURFACE_MAIN.blit(self.animation[self.sprite_image], (self.x*constants.CELL_WIDTH, self.y* constants.CELL_HEIGHT))
+
+    def distance_to(self, other):
+        dx = other.x - self.x
+        dy = other.y - self.y
+
+        return math.sqrt((dx*dx) + (dy*dy))
+    
+    def move_towards(self, other):
+        dx = other.x - self.x
+        dy = other.y - self.y
+
+        distance = math.sqrt((dx*dx) + (dy*dy))
+
+        dx = int(round(dx / distance))
+        dy = int(round(dy / distance))
+
+        self.creature.move(dx, dy)
 
 class obj_Game:
     def __init__(self):
@@ -294,12 +312,54 @@ class com_Item:
 # 88     88  dP
 
 
-class ai_Test:
+class ai_Confuse:
     """
     Once per turn, execute.
     """
+    def __init__(self, old_ai, num_turns):
+        self.old_ai = old_ai
+        self.num_turns = num_turns
+
     def take_turn(self):
-        self.owner.creature.move(tcod.random_get_int(0, -1, 1), tcod.random_get_int(0, -1, 1))
+        if self.num_turns > 0:
+            self.owner.creature.move(
+                tcod.random_get_int(0, -1, 1), 
+                tcod.random_get_int(0, -1, 1))
+            self.num_turns -= 1
+        else:
+            self.owner.ai = self.old_ai
+            game_message("The creature has broken free!", constants.COLOR_RED)
+
+class ai_Chase:
+    """  
+    AI needs to continuously moves toward target (PLAYER).
+
+    Gets list of coords from self to target, 
+    each turn move 1 coord closer to target.
+    """
+
+    def take_turn(self):
+        monster = self.owner
+
+        if tcod.map_is_in_fov(FOV_MAP, monster.x, monster.y):
+
+            # move towards the player if far away.
+            if monster.distance_to(PLAYER) >= 2:
+                self.owner.move_towards(PLAYER)
+
+            # if close enough, attack player.
+            elif PLAYER.creature.hp > 0:
+                monster.creature.attack(PLAYER, 3)
+
+
+# Death
+# 888888ba                      dP   dP       
+# 88    `8b                     88   88       
+# 88     88 .d8888b. .d8888b. d8888P 88d888b. 
+# 88     88 88ooood8 88'  `88   88   88'  `88 
+# 88    .8P 88.  ... 88.  .88   88   88    88 
+# 8888888P  `88888P' `88888P8   dP   dP    dP 
+
 
 def death_monster(monster):
     """ On death, most monsters stop moving. """
@@ -360,6 +420,9 @@ def map_check_for_creatures(x, y, exclude_object = None):
         if target:
             return target
 
+# def map_check_for_wall(x, y):
+#     incoming_map[x][y].block_path
+    
 def map_make_fov(incoming_map):
     global FOV_MAP
 
@@ -383,6 +446,51 @@ def map_objects_at_coords(coords_x, coords_y):
         if obj.x == coords_x and obj.y == coords_y]
 
     return object_options
+
+def map_find_line(coords1, coords2):
+    """ 
+    Converts two x, y coords into a list of tiles.
+
+    coords1 : (x1, y1)
+    coords2 : (x2, y2)
+    """
+
+    x1, y1 = coords1
+    x2, y2 = coords2
+
+    tcod.line_init(x1, y1, x2, y2)
+
+    calc_x, calc_y = tcod.line_step()
+
+    coord_list = []
+
+    if x1 == x2 and y1 == y2:
+        return [(x1, y1)]
+
+    while (calc_x is not None):
+        coord_list.append((calc_x, calc_y))
+
+        calc_x, calc_y = tcod.line_step()
+
+    return coord_list
+
+def map_find_radius(coords, radius):
+    
+    center_x, center_y = coords
+
+    tile_list = []
+
+    start_x = center_x - radius
+    end_x = center_x + radius + 1
+
+    start_y = center_y - radius
+    end_y = center_y + radius + 1
+
+    for x in range(start_x, end_x):
+        for y in range(start_y, end_y):
+            tile_list.append((x, y))
+
+    return tile_list
 
 
 # Drawing
@@ -462,27 +570,61 @@ def draw_messages():
             constants.COLOR_BLACK)
         # i += 1
 
-def draw_text(display_surface, text_to_display, T_coords, text_font, text_color, back_color = None):
+def draw_text(display_surface, 
+              text_to_display, 
+              T_coords, 
+              text_font, 
+              text_color, 
+              back_color = None, 
+              center = False):
     """ this function takes in some text and displays it on the referenced surface. """
 
     text_surf, text_rect = helper_text_objects(text_to_display, text_font, text_color, back_color)
 
-    text_rect.topleft = T_coords
+    if not center:
+        text_rect.topleft = T_coords
+    else:
+        text_rect.center = T_coords
 
     display_surface.blit(text_surf, text_rect)
 
-def draw_tile_rect(T_coords):
+def draw_tile_rect(T_coords, 
+    tile_color = constants.COLOR_WHITE, 
+    tile_alpha = constants.COLOR_ALPHA, 
+    mark = None):
     x, y = T_coords
+
+    # # default colors
+    # if tile_alpha: local_color = tile_color
+    # else: local_color = constants.COLOR_WHITE
+
+    # # default alpha
+    # if tile_color: local_alpha = tile_alpha
+    # else: local_alpha = constants.alpha
+
     new_x = x * constants.CELL_WIDTH
     new_y = y * constants.CELL_HEIGHT
 
     new_surface = pygame.Surface((constants.CELL_WIDTH, constants.CELL_HEIGHT))
 
-    new_surface.fill(constants.COLOR_WHITE)
+    new_surface.fill(tile_color)
 
-    new_surface.set_alpha(constants.COLOR_ALPHA)
+    new_surface.set_alpha(tile_alpha)
+
+    if mark:
+        # draw_text(new_surface, mark, constants.FONT_CURSOR_TEXT, 
+        #     (new_x, new_y), constants.COLOR_GREY, center = True)
+        draw_text(
+            display_surface = new_surface, 
+            text_to_display = mark, 
+            T_coords = (constants.CELL_WIDTH/2, constants.CELL_HEIGHT/2), 
+            text_font = constants.FONT_CURSOR_TEXT, 
+            text_color = constants.COLOR_BLACK, 
+            back_color = None, 
+            center = True)
 
     SURFACE_MAIN.blit(new_surface, (new_x, new_y))
+
 # Helper Functions
 # dP     dP           dP
 # 88     88           88
@@ -534,6 +676,78 @@ def cast_heal(target, value):
             " healed for " + str(value) + " health!")
         target.creature.heal(value)
     return None
+
+def cast_lightning(damage = 10):
+
+    player_location = (PLAYER.x, PLAYER.y)
+
+    # TODO prompt the caster for a tile
+    # if caster == PLAYER:
+    menu_return = menu_tile_select(coords_origin=player_location, 
+        max_range=5, penetrate_walls=False)
+    # else:
+    #   # TODO create AI function for enemy targeting system.
+    #   # menu_return = 
+    #   # menu_return = (PLAYER.x, PLAYER.y)
+
+    if not isinstance(menu_return, tuple):
+        return menu_return
+    else:
+        # TODO IT'S NOT THE PLAYER COORDS, IT'S THE CASTER COORDS.
+        # convert that tile into a list of tiles between CASTER and TARGET_TILE
+        list_of_tiles = map_find_line((PLAYER.x, PLAYER.y), menu_return)
+        # cycle through list, damage everything found.
+        for i, (x, y) in enumerate(list_of_tiles):
+            target = map_check_for_creatures(x, y)
+            if target:# and x != caster.x and y != caster.y
+                target.creature.take_damage(damage)
+
+def cast_fireball(damage = 5, max_range = 4, radius = 1):
+    player_location = (PLAYER.x, PLAYER.y)
+    # TODO get target tile
+    menu_return = menu_tile_select(
+        coords_origin=player_location, 
+        max_range=max_range, 
+        radius=radius,
+        penetrate_walls=False,
+        pierce_creatures=False)
+    if not isinstance(menu_return, tuple):
+        return menu_return
+    else:
+        # get sequence of tiles
+        tiles_to_damage = map_find_radius(menu_return, radius)
+
+        creature_hit = False
+
+        # damage all creatures in (radius) tiles.
+        for (x, y) in tiles_to_damage:
+            creature_to_damage = map_check_for_creatures(x, y)
+            if creature_to_damage:
+                creature_to_damage.creature.take_damage(damage)
+                if creature_to_damage is not PLAYER:
+                    creature_hit = True
+        if creature_hit:
+            game_message("Screams of pain echo around you.", constants.COLOR_RED)
+
+def cast_confusion():
+
+    # TODO select tile
+    menu_return = menu_tile_select()
+    if not isinstance(menu_return, tuple):
+        return menu_return
+    else:
+        # TODO get target
+        tile_x, tile_y = menu_return
+        target = map_check_for_creatures(tile_x, tile_y)
+
+        # TODO temporarily give target confusion ai.
+        if target:
+            oldai = target.ai
+            target.ai = ai_Confuse(old_ai = oldai, num_turns = 5)
+            target.ai.owner = target
+
+            game_message("The creature's eyes glaze over", constants.COLOR_GREEN)
+
 
 # Menus
 # 8888ba.88ba
@@ -678,7 +892,8 @@ def menu_inventory():
         pygame.display.flip()
     return 'no-action'
 
-def menu_tile_select():
+def menu_tile_select(coords_origin = None, max_range = None, radius = None,
+    penetrate_walls = True, pierce_creatures = True):
     """  
     This menu lets the player select a tile.
 
@@ -691,36 +906,67 @@ def menu_tile_select():
     while not menu_close:
 
         # Get mouse position
-        events_list = pygame.event.get()
         mouse_x, mouse_y = pygame.mouse.get_pos()
+
+        # get button clicks
+        events_list = pygame.event.get()
 
         # mouse map selection
         map_coord_x = int(mouse_x / constants.CELL_WIDTH)
         map_coord_y = int(mouse_y / constants.CELL_HEIGHT)
         
-        # get button clicks
+        valid_tiles = []
+
+        if coords_origin:
+            full_list_tiles = map_find_line(coords_origin, (map_coord_x, map_coord_y))
+
+            for i,(x, y) in enumerate(full_list_tiles):
+
+                valid_tiles.append((x, y))
+
+                # stop at max_range
+                if max_range and i >= max_range - 1:
+                        break
+
+                # stop at wall
+                if (not penetrate_walls and 
+                    GAME.current_map[x][y].block_path):
+                    break
+                
+                # stop at creature.
+                if (not pierce_creatures and 
+                    map_check_for_creatures(x, y)):
+                    break
+
+        else: 
+            valid_tiles = [(map_coord_x, map_coord_y)]
+
+        # return map_coords when presses left mb
         for event in events_list:
             if event.type == pygame.QUIT:
                 return "quit"
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_l:
+                if event.key == pygame.K_TAB or event.key == pygame.K_ESCAPE:
                     menu_close = True
             if event.type == pygame.MOUSEBUTTONDOWN:
-                # buttons:
-                    # 1 == lmb
-                    # 2 = mmb
-                    # 3 == rmb
-                    # 4 == scroll up
-                    # 5 == scroll down
                 if event.button == 1:
-                    # TODO will turn into a return
-                    game_message(str( (map_coord_x, map_coord_y) ) )
-        
+                    # game_message(str( (map_coord_x, map_coord_y) ) )
+                    return valid_tiles[-1]
+
         # draw game first
         draw_game()
 
         # draw rectangle at mouse position on top of game
-        draw_tile_rect((map_coord_x, map_coord_y))
+        for (tile_x, tile_y) in valid_tiles:
+            if not(tile_x, tile_y) == valid_tiles[-1]:
+                draw_tile_rect((tile_x, tile_y))
+            else:
+                draw_tile_rect((tile_x, tile_y), mark = 'X')
+        if radius:
+            area_effect = map_find_radius(valid_tiles[-1], radius)
+            for tile_x, tile_y in area_effect:
+                draw_tile_rect((tile_x, tile_y), tile_color=constants.COLOR_RED)
+                
 
         # update the display
         pygame.display.flip()
@@ -807,7 +1053,7 @@ def game_initialize():
         container = container_com1)
 
     item_com1 = com_Item(value = 4, use_function=cast_heal)
-    ai_com1 = ai_Test()
+    ai_com1 = ai_Chase()
     creature_com2 = com_Creature("jackie", death_function = death_monster)
     ENEMY = obj_Actor(15, 15, "smart crab",
         ASSETS.A_ENEMY,
@@ -818,7 +1064,7 @@ def game_initialize():
 
 
     item_com2 = com_Item(value = 5, use_function=cast_heal)
-    ai_com2 = ai_Test()
+    ai_com2 = ai_Chase()
     creature_com3 = com_Creature("bob", death_function = death_monster)
     ENEMY2 = obj_Actor(14, 15, "dumb crab",
         ASSETS.A_ENEMY,
@@ -869,7 +1115,14 @@ def game_handle_keys():
                 return menu_inventory()
             # turn on tile selection
             if event.key == pygame.K_l:
-                return menu_tile_select()
+                # return menu_tile_select()
+                return cast_lightning()
+            if event.key == pygame.K_f:
+                return cast_fireball()
+            if event.key == pygame.K_c:
+                return cast_confusion()
+            
+            
 
 
     return "no-action"
