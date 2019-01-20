@@ -43,10 +43,12 @@ class struc_Assets:
         self.shield = obj_Spritesheet("data/graphics/Items/Shield.png")
         self.medwep = obj_Spritesheet("data/graphics/Items/MedWep.png")
         self.scroll = obj_Spritesheet("data/graphics/Items/Scroll.png")
+        self.flesh = obj_Spritesheet("data/graphics/Items/Flesh.png")
 
         # ANIMATIONS
         self.A_PLAYER = self.reptiles.get_animation('m', 5, 16, 16, 2, (32, 32))
-        self.A_ENEMY = self.aquatic.get_animation('k', 1, 16, 16, 2, (32, 32))
+        self.A_SNAKE_01 = self.reptiles.get_animation('e', 5, 16, 16, 2, (32, 32))
+        self.A_SNAKE_02 = self.reptiles.get_animation('k', 5, 16, 16, 2, (32, 32))
 
         # SPRITES
         self.S_WALL = self.wall.get_image('d', 7, 16, 16,(32, 32))[0]
@@ -61,6 +63,8 @@ class struc_Assets:
         self.S_SCROLL_YELLOW = self.scroll.get_image('e', 1, 16, 16, (32, 32))
         self.S_SCROLL_RED = self.scroll.get_image('c', 2, 16, 16, (32, 32))
         self.S_SCROLL_BLANK = self.scroll.get_image('d', 6, 16, 16, (32, 32))
+        self.S_FLESH_01 = self.flesh.get_image('b', 4, 16, 16, (32, 32))
+
 
 # Objects
 #  .88888.  dP       oo                     dP
@@ -457,8 +461,8 @@ class ai_Confuse:
     def take_turn(self):
         if self.num_turns > 0:
             self.owner.creature.move(
-                tcod.random_get_int(0, -1, 1),
-                tcod.random_get_int(0, -1, 1))
+                tcod.random_get_int(RAND_INSTANCE, -1, 1),
+                tcod.random_get_int(RAND_INSTANCE, -1, 1))
             self.num_turns -= 1
         else:
             self.owner.ai = self.old_ai
@@ -497,12 +501,13 @@ class ai_Chase:
 # 8888888P  `88888P' `88888P8   dP   dP    dP
 
 
-def death_monster(monster):
+def death_snake(monster):
     """ On death, most monsters stop moving. """
     game_message(monster.creature.name_instance +
                  " is dead!", constants.COLOR_GREY)
     monster.creature = None
     monster.ai = None
+    monster.animation = ASSETS.S_FLESH_01
 
 # Map
 # 8888ba.88ba
@@ -1166,14 +1171,16 @@ def menu_tile_select(coords_origin=None, max_range=None, radius=None,
 # Y8.   .88 88.  ... 88    88 88.  ... 88       88.  .88   88   88.  .88 88             88 
 #  `88888'  `88888P' dP    dP `88888P' dP       `88888P8   dP   `88888P' dP       `88888P' 
 
-
+# ITEMS
 def gen_item(coords):
-    random_num = tcdo.random_get_int(0, 1, 3)
+    random_num = tcod.random_get_int(RAND_INSTANCE, 1, 5)
     new_item = None
 
     if (random_num == 1): new_item = gen_scroll_lightning(coords)
     elif (random_num == 2): new_item = gen_scroll_fireball(coords)
     elif (random_num == 3): new_item = gen_scroll_confusion(coords)
+    elif (random_num == 4): new_item = gen_weapon_sword(coords)
+    elif (random_num == 5): new_item = gen_armor_shield(coords)
     else: new_item = gen_scroll_confusion(coords)
 
     GAME.current_objects.append(new_item)
@@ -1182,8 +1189,8 @@ def gen_item(coords):
 def gen_scroll_lightning(coords):
     x, y = coords
 
-    damage = tcod.random_get_int(0, 5, 7)
-    m_range = tcod.random_get_int(0, 7, 8)
+    damage = tcod.random_get_int(RAND_INSTANCE, 5, 7)
+    m_range = tcod.random_get_int(RAND_INSTANCE, 7, 8)
 
     item_com = com_Item(use_function=cast_lightning, value = (damage, m_range))
 
@@ -1197,9 +1204,9 @@ def gen_scroll_lightning(coords):
 def gen_scroll_fireball(coords):
     x, y = coords
 
-    damage = tcod.random_get_int(0, 2, 4)
-    radius = tcod.random_get_int(0, 1, 2)
-    m_range = tcod.random_get_int(0, 9, 12)
+    damage = tcod.random_get_int(RAND_INSTANCE, 2, 4)
+    radius = tcod.random_get_int(RAND_INSTANCE, 1, 2)
+    m_range = tcod.random_get_int(RAND_INSTANCE, 9, 12)
 
     item_com = com_Item(use_function=cast_fireball, 
                         value = (damage, radius, m_range))
@@ -1214,7 +1221,7 @@ def gen_scroll_fireball(coords):
 def gen_scroll_confusion(coords):
     x, y = coords
 
-    effect_length = tcod.random_get_int(0, 5, 10)
+    effect_length = tcod.random_get_int(RAND_INSTANCE, 5, 10)
 
     item_com = com_Item(use_function=cast_confusion, 
                         value = effect_length)
@@ -1228,17 +1235,42 @@ def gen_scroll_confusion(coords):
 
 def gen_weapon_sword(coords):
     x, y = coords
-    bonus = tcod.random_get_int(0, 1, 2)
-    equipment_com = com_Equipment(attack_bonus = bonus, slot= "hand")
 
-    return_object = obj_Actor()
+    bonus = tcod.random_get_int(RAND_INSTANCE, 1, 2)
+
+    equipment_com = com_Equipment(attack_bonus = bonus, slot= "hand_right")
+
+    return_object = obj_Actor(x, y,
+                 "sword",
+                 animation = ASSETS.S_SWORD,
+                 equipment=equipment_com)
+    return return_object
 
 
-def gen_weapon_dagger(coords):
-    print("hi")
+def gen_armor_shield(coords):
+    x, y = coords
 
-def gen_shield(coords):
-    print("hi")
+    bonus = tcod.random_get_int(RAND_INSTANCE, 1, 2)
+
+    equipment_com = com_Equipment(defense_bonus = bonus, slot= "hand_left")
+
+    return_object = obj_Actor(x, y,
+                 "shield",
+                 animation = ASSETS.S_SHIELD,
+                 equipment=equipment_com)
+    return return_object
+
+# ENEMIES
+
+def gen_enemy(coords):
+
+
+def gen_snake_anaconda(coords):
+    print("HI")
+
+def gen_snake_cobra(coords):
+    print("HI")
+
 
 # Game
 #  .88888.
@@ -1289,15 +1321,18 @@ def game_main_loop():
 def game_initialize():
     ''' This function initializes the main window and pygame'''
 
-    global SURFACE_MAIN, GAME, CLOCK, FOV_CALCULATE, ASSETS, PLAYER, ENEMY
+    global SURFACE_MAIN, RAND_INSTANCE, GAME, CLOCK, FOV_CALCULATE, ASSETS, PLAYER, ENEMY
 
     # initialize pygame
     pygame.init()
 
     pygame.key.set_repeat(200, 70)
 
+
     SURFACE_MAIN = pygame.display.set_mode((constants.MAP_WIDTH*constants.CELL_WIDTH,
                                             constants.MAP_HEIGHT*constants.CELL_HEIGHT))
+    
+    RAND_INSTANCE = None #tcod.random_new_from_seed(1000)
 
     GAME = obj_Game()
 
@@ -1319,9 +1354,9 @@ def game_initialize():
     # create an enemy
     item_com1 = com_Item(value=4, use_function=cast_heal)
     ai_com1 = ai_Chase()
-    creature_com2 = com_Creature("jackie", death_function=death_monster)
+    creature_com2 = com_Creature("jackie", death_function=death_snake)
     ENEMY = obj_Actor(15, 15, "smart crab",
-                      ASSETS.A_ENEMY,
+                      ASSETS.A_SNAKE_01,
                       animation_speed=1.0,
                       creature=creature_com2,
                       ai=ai_com1,
@@ -1330,38 +1365,23 @@ def game_initialize():
     # create an enemy
     item_com2 = com_Item(value=5, use_function=cast_heal)
     ai_com2 = ai_Chase()
-    creature_com3 = com_Creature("bob", death_function=death_monster)
+    creature_com3 = com_Creature("bob", death_function=death_snake)
     ENEMY2 = obj_Actor(14, 15, "dumb crab",
-                       ASSETS.A_ENEMY,
+                       ASSETS.A_SNAKE_01,
                        animation_speed=1.0,
                        creature=creature_com3,
                        ai=ai_com2,
                        item=item_com2)
-    # old items
-        # # create a sword
-        # equipment_com1 = com_Equipment(attack_bonus=2, slot="hand_right")
-        # SWORD1 = obj_Actor(2, 2, "Short sword",
-        #                    ASSETS.S_SWORD,
-        #                    equipment=equipment_com1)
 
-        # # create a shield
-        # equipment_com2 = com_Equipment(defense_bonus=2, slot="hand_left")
-        # SHIELD = obj_Actor(2, 3, "shield",
-        #                    ASSETS.S_SHIELD,
-        #                    equipment=equipment_com2)
-
-        # # create a sword
-        # equipment_com3 = com_Equipment(attack_bonus=2, slot="hand_right")
-        # SWORD2 = obj_Actor(2, 4, "Short sword",
-        #                    ASSETS.S_SWORD,
-        #                    equipment=equipment_com3)
+    # GAME.current_objects = [ENEMY, ENEMY2, PLAYER, SWORD1, SHIELD, SWORD2]
+    GAME.current_objects = [ENEMY, ENEMY2, PLAYER]
 
     # create scrolls
     gen_item((2, 2))
     gen_item((2, 3))
     gen_item((2, 4))
-    # GAME.current_objects = [ENEMY, ENEMY2, PLAYER, SWORD1, SHIELD, SWORD2]
-    GAME.current_objects = [ENEMY, ENEMY2, PLAYER, SCROLL_1, SCROLL_2, SCROLL_3]
+
+    print([(obj.display_name + '\n') for obj in GAME.current_objects])
 
 
 def game_handle_keys():
