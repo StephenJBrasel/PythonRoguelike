@@ -38,6 +38,7 @@ class struc_Assets:
         # SPRITESHEETS
         self.reptiles = obj_Spritesheet("data/graphics/Characters/Reptile.png")
         self.aquatic = obj_Spritesheet("data/graphics/Characters/Aquatic.png")
+        self.aquatic = obj_Spritesheet("data/graphics/Characters/Rodent.png")
         self.wall = obj_Spritesheet("data/graphics/Objects/Wall.png")
         self.floor = obj_Spritesheet("data/graphics/Objects/Floor.png")
         self.shield = obj_Spritesheet("data/graphics/Items/Shield.png")
@@ -46,16 +47,20 @@ class struc_Assets:
         self.flesh = obj_Spritesheet("data/graphics/Items/Flesh.png")
 
         # ANIMATIONS
-        self.A_PLAYER = self.reptiles.get_animation('m', 5, 16, 16, 2, (32, 32))
-        self.A_SNAKE_01 = self.reptiles.get_animation('e', 5, 16, 16, 2, (32, 32))
-        self.A_SNAKE_02 = self.reptiles.get_animation('k', 5, 16, 16, 2, (32, 32))
+        self.A_PLAYER = self.reptiles.get_animation(
+            'm', 5, 16, 16, 2, (32, 32))
+        self.A_SNAKE_01 = self.reptiles.get_animation(
+            'e', 5, 16, 16, 2, (32, 32))
+        self.A_SNAKE_02 = self.reptiles.get_animation(
+            'k', 5, 16, 16, 2, (32, 32))
 
         # SPRITES
-        self.S_WALL = self.wall.get_image('d', 7, 16, 16,(32, 32))[0]
+        self.S_WALL = self.wall.get_image('d', 7, 16, 16, (32, 32))[0]
         self.S_WALLEXPLORED = self.wall.get_image('d', 13, 16, 16, (32, 32))[0]
 
         self.S_FLOOR = self.floor.get_image('b', 8, 16, 16, (32, 32))[0]
-        self.S_FLOOREXPLORED = self.floor.get_image('b', 14, 16, 16, (32, 32))[0]
+        self.S_FLOOREXPLORED = self.floor.get_image(
+            'b', 14, 16, 16, (32, 32))[0]
 
         # ITEMS
         self.S_SWORD = self.medwep.get_image('a', 1, 16, 16, (32, 32))
@@ -505,9 +510,9 @@ def death_snake(monster):
     """ On death, most monsters stop moving. """
     game_message(monster.creature.name_instance +
                  " is dead!", constants.COLOR_GREY)
+    monster.animation = ASSETS.S_FLESH_01
     monster.creature = None
     monster.ai = None
-    monster.animation = ASSETS.S_FLESH_01
 
 # Map
 # 8888ba.88ba
@@ -842,7 +847,7 @@ def cast_heal(target, value):
     return None
 
 
-def cast_lightning(caster, T_damage_maxrange = (10, 5)):
+def cast_lightning(caster, T_damage_maxrange=(10, 5)):
 
     damage, m_range = T_damage_maxrange
 
@@ -870,7 +875,7 @@ def cast_lightning(caster, T_damage_maxrange = (10, 5)):
                 target.creature.take_damage(damage)
 
 
-def cast_fireball(caster, T_damage_radius_range = (5, 1, 4)):
+def cast_fireball(caster, T_damage_radius_range=(5, 1, 4)):
 
     damage, radius, max_range = T_damage_radius_range
 
@@ -902,7 +907,7 @@ def cast_fireball(caster, T_damage_radius_range = (5, 1, 4)):
                          constants.COLOR_RED)
 
 
-def cast_confusion(caster, num_turns = 5):
+def cast_confusion(caster, num_turns=5):
 
     # TODO select tile
     menu_return = menu_tile_select()
@@ -1164,24 +1169,44 @@ def menu_tile_select(coords_origin=None, max_range=None, radius=None,
 
 
 # Generators
-#  .88888.                                                 dP                              
-# d8'   `88                                                88                              
-# 88        .d8888b. 88d888b. .d8888b. 88d888b. .d8888b. d8888P .d8888b. 88d888b. .d8888b. 
-# 88   YP88 88ooood8 88'  `88 88ooood8 88'  `88 88'  `88   88   88'  `88 88'  `88 Y8ooooo. 
-# Y8.   .88 88.  ... 88    88 88.  ... 88       88.  .88   88   88.  .88 88             88 
-#  `88888'  `88888P' dP    dP `88888P' dP       `88888P8   dP   `88888P' dP       `88888P' 
+#  .88888.                                                 dP
+# d8'   `88                                                88
+# 88        .d8888b. 88d888b. .d8888b. 88d888b. .d8888b. d8888P .d8888b. 88d888b. .d8888b.
+# 88   YP88 88ooood8 88'  `88 88ooood8 88'  `88 88'  `88   88   88'  `88 88'  `88 Y8ooooo.
+# Y8.   .88 88.  ... 88    88 88.  ... 88       88.  .88   88   88.  .88 88             88
+#  `88888'  `88888P' dP    dP `88888P' dP       `88888P8   dP   `88888P' dP       `88888P'
+
+# PLAYER
+def gen_player(coords):
+    # create the player
+    x, y = coords
+    container_com = com_Container()
+    creature_com = com_Creature("greg", base_atk=4)
+    player = obj_Actor(x, y, "python",
+                       ASSETS.A_PLAYER,
+                       animation_speed=1.0,
+                       creature=creature_com,
+                       container=container_com)
+    return player
+
 
 # ITEMS
 def gen_item(coords):
     random_num = tcod.random_get_int(RAND_INSTANCE, 1, 5)
     new_item = None
 
-    if (random_num == 1): new_item = gen_scroll_lightning(coords)
-    elif (random_num == 2): new_item = gen_scroll_fireball(coords)
-    elif (random_num == 3): new_item = gen_scroll_confusion(coords)
-    elif (random_num == 4): new_item = gen_weapon_sword(coords)
-    elif (random_num == 5): new_item = gen_armor_shield(coords)
-    else: new_item = gen_scroll_confusion(coords)
+    if (random_num == 1):
+        new_item = gen_scroll_lightning(coords)
+    elif (random_num == 2):
+        new_item = gen_scroll_fireball(coords)
+    elif (random_num == 3):
+        new_item = gen_scroll_confusion(coords)
+    elif (random_num == 4):
+        new_item = gen_weapon_sword(coords)
+    elif (random_num == 5):
+        new_item = gen_armor_shield(coords)
+    else:
+        new_item = gen_scroll_confusion(coords)
 
     GAME.current_objects.append(new_item)
 
@@ -1192,13 +1217,13 @@ def gen_scroll_lightning(coords):
     damage = tcod.random_get_int(RAND_INSTANCE, 5, 7)
     m_range = tcod.random_get_int(RAND_INSTANCE, 7, 8)
 
-    item_com = com_Item(use_function=cast_lightning, value = (damage, m_range))
+    item_com = com_Item(use_function=cast_lightning, value=(damage, m_range))
 
     return_object = obj_Actor(x, y, "lightning scroll",
-                              animation=ASSETS.S_SCROLL_YELLOW, 
-                              item = item_com)
+                              animation=ASSETS.S_SCROLL_YELLOW,
+                              item=item_com)
 
-    return return_object 
+    return return_object
 
 
 def gen_scroll_fireball(coords):
@@ -1208,14 +1233,14 @@ def gen_scroll_fireball(coords):
     radius = tcod.random_get_int(RAND_INSTANCE, 1, 2)
     m_range = tcod.random_get_int(RAND_INSTANCE, 9, 12)
 
-    item_com = com_Item(use_function=cast_fireball, 
-                        value = (damage, radius, m_range))
+    item_com = com_Item(use_function=cast_fireball,
+                        value=(damage, radius, m_range))
 
     return_object = obj_Actor(x, y, "fireball scroll",
-                              animation=ASSETS.S_SCROLL_RED, 
-                              item = item_com)
+                              animation=ASSETS.S_SCROLL_RED,
+                              item=item_com)
 
-    return return_object 
+    return return_object
 
 
 def gen_scroll_confusion(coords):
@@ -1223,14 +1248,14 @@ def gen_scroll_confusion(coords):
 
     effect_length = tcod.random_get_int(RAND_INSTANCE, 5, 10)
 
-    item_com = com_Item(use_function=cast_confusion, 
-                        value = effect_length)
+    item_com = com_Item(use_function=cast_confusion,
+                        value=effect_length)
 
     return_object = obj_Actor(x, y, "confusion scroll",
-                              animation=ASSETS.S_SCROLL_BLANK, 
-                              item = item_com)
+                              animation=ASSETS.S_SCROLL_BLANK,
+                              item=item_com)
 
-    return return_object 
+    return return_object
 
 
 def gen_weapon_sword(coords):
@@ -1238,12 +1263,12 @@ def gen_weapon_sword(coords):
 
     bonus = tcod.random_get_int(RAND_INSTANCE, 1, 2)
 
-    equipment_com = com_Equipment(attack_bonus = bonus, slot= "hand_right")
+    equipment_com = com_Equipment(attack_bonus=bonus, slot="hand_right")
 
     return_object = obj_Actor(x, y,
-                 "sword",
-                 animation = ASSETS.S_SWORD,
-                 equipment=equipment_com)
+                              "sword",
+                              animation=ASSETS.S_SWORD,
+                              equipment=equipment_com)
     return return_object
 
 
@@ -1252,24 +1277,79 @@ def gen_armor_shield(coords):
 
     bonus = tcod.random_get_int(RAND_INSTANCE, 1, 2)
 
-    equipment_com = com_Equipment(defense_bonus = bonus, slot= "hand_left")
+    equipment_com = com_Equipment(defense_bonus=bonus, slot="hand_left")
 
     return_object = obj_Actor(x, y,
-                 "shield",
-                 animation = ASSETS.S_SHIELD,
-                 equipment=equipment_com)
+                              "shield",
+                              animation=ASSETS.S_SHIELD,
+                              equipment=equipment_com)
     return return_object
 
-# ENEMIES
 
+# ENEMIES
 def gen_enemy(coords):
+    random_num = tcod.random_get_int(RAND_INSTANCE, 1, 100)
+    new_enemy = None
+
+    if (random_num <= 15):
+        new_enemy = gen_snake_cobra(coords)
+    else:
+        new_enemy = gen_snake_anaconda(coords)
+
+    GAME.current_objects.append(new_enemy)
 
 
 def gen_snake_anaconda(coords):
-    print("HI")
+    # create an enemy
+    x, y = coords
+
+    max_health = tcod.random_get_int(RAND_INSTANCE, 5, 10)
+    base_attack = tcod.random_get_int(RAND_INSTANCE, 1, 3)
+    base_defense = 0 #tcod.random_get_int(RAND_INSTANCE, 0, 1)
+
+    generated_name = tcod.namegen_generate("Celtic female")
+
+    # item_com1 = com_Item(value=4, use_function=cast_heal)
+    creature_com = com_Creature(generated_name, 
+                                base_atk=base_attack, 
+                                base_def=base_defense, 
+                                hp=max_health,
+                                death_function=death_snake)
+    ai_com = ai_Chase()
+    snake = obj_Actor(x, y, "anaconda",
+                      ASSETS.A_SNAKE_01,
+                      animation_speed=1.0,
+                      creature=creature_com,
+                      ai=ai_com)
+
+    return snake
+
 
 def gen_snake_cobra(coords):
-    print("HI")
+    # create an enemy
+    x, y = coords
+
+    max_health = tcod.random_get_int(RAND_INSTANCE, 15, 20)
+    base_attack = tcod.random_get_int(RAND_INSTANCE, 3, 6)
+    base_defense = 0 #tcod.random_get_int(RAND_INSTANCE, 0, 1)
+
+    generated_name = tcod.namegen_generate("Celtic male")
+
+
+    # item_com1 = com_Item(value=4, use_function=cast_heal)
+    creature_com = com_Creature(generated_name, 
+                                base_atk=base_attack, 
+                                base_def=base_defense, 
+                                hp=max_health,
+                                death_function=death_snake)
+    ai_com = ai_Chase()
+    cobra = obj_Actor(x, y, "cobra",
+                      ASSETS.A_SNAKE_02,
+                      animation_speed=1.0,
+                      creature=creature_com,
+                      ai=ai_com)
+
+    return cobra
 
 
 # Game
@@ -1321,18 +1401,17 @@ def game_main_loop():
 def game_initialize():
     ''' This function initializes the main window and pygame'''
 
-    global SURFACE_MAIN, RAND_INSTANCE, GAME, CLOCK, FOV_CALCULATE, ASSETS, PLAYER, ENEMY
+    global SURFACE_MAIN, RAND_INSTANCE, GAME, CLOCK, FOV_CALCULATE, ASSETS, PLAYER
 
     # initialize pygame
     pygame.init()
 
     pygame.key.set_repeat(200, 70)
 
-
     SURFACE_MAIN = pygame.display.set_mode((constants.MAP_WIDTH*constants.CELL_WIDTH,
                                             constants.MAP_HEIGHT*constants.CELL_HEIGHT))
-    
-    RAND_INSTANCE = None #tcod.random_new_from_seed(1000)
+
+    RAND_INSTANCE = None  # tcod.random_new_from_seed(1000)
 
     GAME = obj_Game()
 
@@ -1342,44 +1421,22 @@ def game_initialize():
 
     ASSETS = struc_Assets()
 
-    # create the player
-    container_com1 = com_Container()
-    creature_com1 = com_Creature("greg", base_atk=4)
-    PLAYER = obj_Actor(1, 1, "python",
-                       ASSETS.A_PLAYER,
-                       animation_speed=1.0,
-                       creature=creature_com1,
-                       container=container_com1)
-
-    # create an enemy
-    item_com1 = com_Item(value=4, use_function=cast_heal)
-    ai_com1 = ai_Chase()
-    creature_com2 = com_Creature("jackie", death_function=death_snake)
-    ENEMY = obj_Actor(15, 15, "smart crab",
-                      ASSETS.A_SNAKE_01,
-                      animation_speed=1.0,
-                      creature=creature_com2,
-                      ai=ai_com1,
-                      item=item_com1)
-
-    # create an enemy
-    item_com2 = com_Item(value=5, use_function=cast_heal)
-    ai_com2 = ai_Chase()
-    creature_com3 = com_Creature("bob", death_function=death_snake)
-    ENEMY2 = obj_Actor(14, 15, "dumb crab",
-                       ASSETS.A_SNAKE_01,
-                       animation_speed=1.0,
-                       creature=creature_com3,
-                       ai=ai_com2,
-                       item=item_com2)
-
-    # GAME.current_objects = [ENEMY, ENEMY2, PLAYER, SWORD1, SHIELD, SWORD2]
-    GAME.current_objects = [ENEMY, ENEMY2, PLAYER]
+    tcod.namegen_parse("data/namegen/jice_celtic.cfg")
+    # tcod.namegen_parse("data/namegen/jice_fantasy.cfg")
+    # tcod.namegen_parse("data/namegen/jice_mesopotamian.cfg")
 
     # create scrolls
     gen_item((2, 2))
     gen_item((2, 3))
     gen_item((2, 4))
+
+    # create 2 enemies
+    gen_enemy((15, 15))
+    gen_enemy((15, 16))
+
+    # create the player
+    PLAYER = gen_player((1, 1))
+    GAME.current_objects.append(PLAYER)
 
     print([(obj.display_name + '\n') for obj in GAME.current_objects])
 
