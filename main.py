@@ -6,18 +6,6 @@ import math
 # game files
 import constants
 
-# Possible ASCII art specifications.
-# bell, big, cybermedium, drpepper, fender, gothic, kban, nancyj, standard
-# nancyj was chosen.
-
-# Definitions
-# 888888ba           .8888b oo          oo   dP   oo
-# 88    `8b          88   "                  88
-# 88     88 .d8888b. 88aaa  dP 88d888b. dP d8888P dP .d8888b. 88d888b. .d8888b.
-# 88     88 88ooood8 88     88 88'  `88 88   88   88 88'  `88 88'  `88 Y8ooooo.
-# 88    .8P 88.  ... 88     88 88    88 88   88   88 88.  .88 88    88       88
-# 8888888P  `88888P' dP     dP dP    dP dP   dP   dP `88888P' dP    dP `88888P'
-
 # Structs
 # .d88888b    dP                                dP
 # 88.    "'   88                                88
@@ -87,6 +75,7 @@ class obj_Actor:
                  name_object,
                  animation,
                  animation_speed=0.5,
+                 depth = 0,
                  creature=None,
                  ai=None,
                  container=None,
@@ -98,6 +87,7 @@ class obj_Actor:
         self.animation = animation
         # time for entire animation in seconds
         self.animation_speed = animation_speed / 1.0
+        self.depth = depth
 
         # animation flicker speed
         self.flicker_speed = self.animation_speed / len(self.animation)
@@ -143,7 +133,7 @@ class obj_Actor:
         is_visible = tcod.map_is_in_fov(FOV_MAP, self.x, self.y)
         if is_visible:
             if len(self.animation) == 1:
-                SURFACE_MAIN.blit(
+                SURFACE_MAP.blit(
                     self.animation[0], (self.x*constants.CELL_WIDTH, self.y * constants.CELL_HEIGHT))
 
             elif len(self.animation) > 1:
@@ -159,7 +149,7 @@ class obj_Actor:
                     else:
                         self.sprite_image += 1
 
-                SURFACE_MAIN.blit(self.animation[self.sprite_image], (
+                SURFACE_MAP.blit(self.animation[self.sprite_image], (
                     self.x*constants.CELL_WIDTH, self.y * constants.CELL_HEIGHT))
 
     def distance_to(self, other):
@@ -182,7 +172,7 @@ class obj_Actor:
 
 class obj_Game:
     def __init__(self):
-        self.current_map = map_create()
+        self.current_map, self.current_rooms = map_create()
         self.current_objects = []
 
         self.message_history = []
@@ -244,6 +234,90 @@ class obj_Spritesheet:
 
         return image_list
 
+
+class obj_Room:
+    """
+    This is a rectangle that lives on the map
+    """
+    def __init__(self, T_coords, T_size):
+        self.x1, self.y1 = T_coords
+        self.w, self.h = T_size
+
+        self.x2 = self.x1 + self.w
+        self.y2 = self.y1 + self.h
+    
+    @property
+    def center(self):
+        center_x = int((self.x1 + self.x2)* 0.5)
+        center_y = int((self.y1 + self.y2)* 0.5)
+        return (center_x, center_y)
+    
+    def intersect(self, other):
+        # return True if other object intersects with this one.
+        obj_intersect = (self.x1 <= other.x2 and self.x2 >= other.x1 and
+                         self.y1 <= other.y2 and self.y2 >= other.y1)
+        return obj_intersect
+
+
+class obj_Camera:
+    def __init__(self, follow_speed = 0.1):
+        self.x, self.y = (0, 0)
+        self.width = constants.CAMERA_WIDTH
+        self.height = constants.CAMERA_HEIGHT
+        self.follow_speed = follow_speed
+
+    @property
+    def rect(self):
+        pos_rect = pygame.Rect((0, 0), 
+            (constants.CAMERA_WIDTH, constants.CAMERA_HEIGHT))
+
+        pos_rect.center = (self.x, self.y)
+
+        return pos_rect
+
+    @property
+    def map_address(self):
+        map_x = int(self.x/constants.CELL_WIDTH)
+        map_y = int(self.y/constants.CELL_HEIGHT)
+
+        return (map_x, map_y)
+
+    def update(self, T_target):
+
+        target_x = T_target.x * constants.CELL_WIDTH + int(constants.CELL_WIDTH/2)
+        target_y = T_target.y * constants.CELL_HEIGHT + int(constants.CELL_HEIGHT/2)
+
+        distance_x, distance_y = self.map_dist((target_x, target_y))
+
+        self.x += int(distance_x * self.follow_speed)
+        self.y += int(distance_y * self.follow_speed)
+
+    def win_to_map(self, T_coords):
+
+        tar_x, tar_y = T_coords
+        # convert window coordinates to distance from camera
+        cam_d_x, cam_d_y = self.cam_dist((tar_x, tar_y))
+
+        # distance from camera -> map coordinate
+        map_p_x = self.x + cam_d_x
+        map_p_y = self.y + cam_d_y
+
+        return (map_p_x, map_p_y)
+
+    def map_dist(self, T_coords):
+        new_x, new_y = T_coords
+        
+        dist_x = new_x - self.x
+        dist_y = new_y - self.y
+
+        return (dist_x, dist_y)
+
+    def cam_dist(self, T_coords):
+        win_x, win_y = T_coords
+        dist_x = int(win_x - (self.width/2))
+        dist_y = int(win_y - (self.height/2))
+
+        return (dist_x, dist_y)
 
 # Components
 #  a88888b.                                                                    dP
@@ -378,7 +452,7 @@ class com_Item:
             if actor.container.volume + self.volume > actor.container.max_volume:
                 game_message("Not enough room to pick up", constants.COLOR_RED)
             else:
-                game_message("Picking up", constants.COLOR_WHITE)
+                game_message(("Picking up " + self.owner.name_object), constants.COLOR_WHITE)
                 actor.container.inventory.append(self.owner)
                 GAME.current_objects.remove(self.owner)
                 self.container = actor.container
@@ -526,21 +600,114 @@ def death_snake(monster):
 
 
 def map_create():
-    new_map = [[struc_Tile(False) for y in range(0, constants.MAP_HEIGHT)]
+    new_map = [[struc_Tile(True) for y in range(0, constants.MAP_HEIGHT)]
                for x in range(0, constants.MAP_WIDTH)]
-    new_map[10][10].block_path = True
-    new_map[10][15].block_path = True
+    # for x in range(constants.MAP_WIDTH):
+        #     new_map[x][0].block_path = True
+        #     new_map[x][constants.MAP_HEIGHT - 1].block_path = True
+        # for y in range(constants.MAP_HEIGHT):
+        #     new_map[0][y].block_path = True
+        #     new_map[constants.MAP_WIDTH - 1][y].block_path = True
+    # generate new room
+    list_of_rooms = []
 
-    for x in range(constants.MAP_WIDTH):
-        new_map[x][0].block_path = True
-        new_map[x][constants.MAP_HEIGHT - 1].block_path = True
-    for y in range(constants.MAP_HEIGHT):
-        new_map[0][y].block_path = True
-        new_map[constants.MAP_WIDTH - 1][y].block_path = True
+    for i in range(constants.MAP_MAX_NUM_ROOMS):
+        w = tcod.random_get_int(RAND_INSTANCE, 
+                                constants.ROOM_MIN_WIDTH, 
+                                constants.ROOM_MAX_WIDTH)
+        h = tcod.random_get_int(RAND_INSTANCE, 
+                                constants.ROOM_MIN_HEIGHT, 
+                                constants.ROOM_MAX_HEIGHT)
+        x = tcod.random_get_int(RAND_INSTANCE, 
+                                constants.MAP_BORDER_WIDTH, 
+                                (constants.MAP_WIDTH - w - constants.MAP_BORDER_WIDTH - 1))
+        y = tcod.random_get_int(RAND_INSTANCE, 
+                                constants.MAP_BORDER_WIDTH, 
+                                (constants.MAP_HEIGHT - h - constants.MAP_BORDER_WIDTH - 1))
+        # create the room
+        new_room = obj_Room((x,y), (w, h))
+
+        # check for other intersecting rooms
+        failed = False
+        for room in list_of_rooms:
+            if new_room.intersect(room):
+                failed = True
+                break
+        # if not failed, place the room
+        if not failed:
+            map_create_room(new_map, new_room)
+            list_of_rooms.append(new_room)
+            current_center = new_room.center
+            
+            if len(list_of_rooms) > 1:
+                previous_center = list_of_rooms[-2].center
+                # dig the tunnels
+                map_create_tunnels(current_center, previous_center, new_map)
 
     map_make_fov(new_map)
 
-    return new_map
+    return new_map, list_of_rooms
+
+
+def map_place_objects(room_list):
+    for room in room_list:
+        x = tcod.random_get_int(RAND_INSTANCE, room.x1 + 1, room.x2 - 1)
+        y = tcod.random_get_int(RAND_INSTANCE, room.y1 + 1, room.y2 - 1)
+
+        gen_enemy((x, y))
+        x = tcod.random_get_int(RAND_INSTANCE, room.x1 + 1, room.x2 - 1)
+        y = tcod.random_get_int(RAND_INSTANCE, room.y1 + 1, room.y2 - 1)
+
+        gen_item((x, y))
+
+
+def map_create_room(new_map, new_room):
+    for x in range(new_room.x1 + 1, new_room.x2):
+        for y in range(new_room.y1 + 1, new_room.y2):
+            new_map[x][y].block_path = False
+
+
+def map_create_tunnels(coords1, coords2, new_map):
+
+    coin_flip = (tcod.random_get_int(RAND_INSTANCE, 0, 1) == 1)
+
+    x1, y1 = coords1
+    x2, y2 = coords2
+
+    minX = min(x1, x2)
+    minY = min(y1, y2)
+
+    maxX = max(x1, x2)
+    maxY = max(y1, y2)
+
+    if coin_flip:
+        if ((minX == x1 and minY == y1) or 
+            (minX == x2 and minY == y2)): 
+            # 0 (min, min) x (max, min) y
+            for x in range(minX, maxX + 1):
+                new_map[x][minY].block_path = False
+            for y in range(minY, maxY + 1):
+                new_map[maxX][y].block_path = False
+        else:
+            # 2 (min, min) x (min, min) y
+            for x in range(minX, maxX + 1):
+                new_map[x][minY].block_path = False
+            for y in range(minY, maxY + 1):
+                new_map[minX][y].block_path = False
+    else:
+        if ((minX == x1 and minY == y1) or 
+            (minX == x2 and minY == y2)): 
+            # 1 (min, min) y (min, max) x
+            for x in range(minX, maxX + 1):
+                new_map[x][maxY].block_path = False
+            for y in range(minY, maxY + 1):
+                new_map[minX][y].block_path = False
+        else:
+            # 3 (min, max) x (max, min) y
+            for x in range(minX, maxX + 1):
+                new_map[x][maxY].block_path = False
+            for y in range(minY, maxY + 1):
+                new_map[maxX][y].block_path = False
 
 
 def map_check_for_creatures(x, y, exclude_object=None):
@@ -656,28 +823,54 @@ def map_find_radius(coords, radius):
 
 
 def draw_game():
-
-    global SURFACE_MAIN
-
     # clear the surface
     SURFACE_MAIN.fill(constants.COLOR_DEFAULT_BG)
+    SURFACE_MAP.fill(constants.COLOR_BLACK)
+
+    CAMERA.update(PLAYER)
+
+    # display_rect = pygame.Rect(
+    #     (0 * constants.CELL_WIDTH, 0 * constants.CELL_HEIGHT), 
+    #     (constants.CAMERA_WIDTH, constants.CAMERA_HEIGHT))
 
     # draw the map
     draw_map(GAME.current_map)
 
     # draw all objects
-    for obj in GAME.current_objects:
+    for obj in sorted(GAME.current_objects, key = lambda obj: obj.depth, reverse = True):
         obj.draw()
+
+    SURFACE_MAIN.blit(SURFACE_MAP, (0, 0), CAMERA.rect)
 
     draw_messages()
     draw_debug()
 
 
 def draw_map(map_to_draw):
-    for x in range(0, constants.MAP_WIDTH):
-        for y in range(0, constants.MAP_HEIGHT):
+
+    # convert camera into address
+    cam_x, cam_y = CAMERA.map_address
+    display_map_w = int(constants.CAMERA_WIDTH / constants.CELL_WIDTH)
+    display_map_h = int(constants.CAMERA_HEIGHT / constants.CELL_HEIGHT)
+
+    render_w_min = cam_x - int(display_map_w / 2)
+    render_h_min = cam_y - int(display_map_h / 2)
+
+    render_w_max = cam_x + int(display_map_w / 2)
+    render_h_max = cam_y + int(display_map_h / 2)
+
+    if render_h_min < 0: render_h_min = 0
+    if render_w_min < 0: render_w_min = 0
+
+    if render_w_max > constants.MAP_WIDTH : render_w_max = constants.MAP_WIDTH
+    if render_h_max > constants.MAP_HEIGHT: render_h_max = constants.MAP_HEIGHT
+
+    for x in range(render_w_min, render_w_max):
+        for y in range(render_h_min, render_h_max):
 
             is_visible = tcod.map_is_in_fov(FOV_MAP, x, y)
+            if FOV_CALCULATE:
+                is_visible = True
 
             if is_visible:
 
@@ -685,21 +878,21 @@ def draw_map(map_to_draw):
 
                 if map_to_draw[x][y].block_path:
                     # draw wall
-                    SURFACE_MAIN.blit(
+                    SURFACE_MAP.blit(
                         ASSETS.S_WALL, (x * constants.CELL_WIDTH, y * constants.CELL_HEIGHT))
                 else:
                     # draw floor
-                    SURFACE_MAIN.blit(
+                    SURFACE_MAP.blit(
                         ASSETS.S_FLOOR, (x * constants.CELL_WIDTH, y * constants.CELL_HEIGHT))
             elif map_to_draw[x][y].explored:
 
                 if map_to_draw[x][y].block_path:
                     # draw explored wall
-                    SURFACE_MAIN.blit(
+                    SURFACE_MAP.blit(
                         ASSETS.S_WALLEXPLORED, (x * constants.CELL_WIDTH, y * constants.CELL_HEIGHT))
                 else:
                     # draw explored floor
-                    SURFACE_MAIN.blit(
+                    SURFACE_MAP.blit(
                         ASSETS.S_FLOOREXPLORED, (x * constants.CELL_WIDTH, y * constants.CELL_HEIGHT))
 
 
@@ -717,10 +910,9 @@ def draw_messages():
 
     text_height = helper_text_height(constants.FONT_MESSAGE_TEXT)
 
-    start_y = constants.MAP_HEIGHT*constants.CELL_HEIGHT - \
-        (constants.NUM_MESSAGES * text_height) - 5
+    start_y = (constants.CAMERA_HEIGHT - 
+        (constants.NUM_MESSAGES * text_height))
 
-    # i = 0
     for i, (message, color) in enumerate(to_draw):
         draw_text(SURFACE_MAIN,
                   message,
@@ -728,7 +920,6 @@ def draw_messages():
                   constants.FONT_MESSAGE_TEXT,
                   color,
                   constants.COLOR_BLACK)
-        # i += 1
 
 
 def draw_text(display_surface,
@@ -786,7 +977,7 @@ def draw_tile_rect(T_coords,
             back_color=None,
             center=True)
 
-    SURFACE_MAIN.blit(new_surface, (new_x, new_y))
+    SURFACE_MAP.blit(new_surface, (new_x, new_y))
 
 # Helper Functions
 # dP     dP           dP
@@ -856,7 +1047,8 @@ def cast_lightning(caster, T_damage_maxrange=(10, 5)):
     # TODO prompt the caster for a tile
     # if caster == PLAYER:
     menu_return = menu_tile_select(coords_origin=caster_location,
-                                   max_range=m_range, penetrate_walls=False)
+                                   max_range=m_range, 
+                                   penetrate_walls=False)
     # else:
     #   # TODO create AI function for enemy targeting system.
     #   # menu_return =
@@ -945,8 +1137,8 @@ def menu_pause():
     menu_text = "PAUSED"
     menu_font = constants.FONT_DEBUG_MESSAGE
 
-    message_x = constants.MAP_WIDTH*constants.CELL_WIDTH*0.5
-    message_y = constants.MAP_HEIGHT*constants.CELL_HEIGHT*0.5
+    message_x = constants.CAMERA_WIDTH*0.5
+    message_y = constants.CAMERA_HEIGHT*0.5
     text_width = helper_text_width(menu_font, menu_text)
     text_height = helper_text_height(menu_font)
     message_x -= text_width*0.5
@@ -980,8 +1172,8 @@ def menu_inventory():
     menu_width = 200
     menu_height = 200
 
-    window_width = constants.MAP_WIDTH*constants.CELL_WIDTH*0.5 - menu_width*0.5
-    window_height = constants.MAP_HEIGHT*constants.CELL_HEIGHT*0.5 - menu_height*0.5
+    window_width = constants.CAMERA_WIDTH*0.5 - menu_width*0.5
+    window_height = constants.CAMERA_HEIGHT*0.5 - menu_height*0.5
 
     menu_text_font = constants.FONT_MESSAGE_TEXT
     menu_text_height = helper_text_height(menu_text_font)
@@ -1103,8 +1295,11 @@ def menu_tile_select(coords_origin=None, max_range=None, radius=None,
         events_list = pygame.event.get()
 
         # mouse map selection
-        map_coord_x = int(mouse_x / constants.CELL_WIDTH)
-        map_coord_y = int(mouse_y / constants.CELL_HEIGHT)
+
+        mapx_pixel, mapy_pixel = CAMERA.win_to_map((mouse_x, mouse_y))
+
+        map_coord_x = int(mapx_pixel / constants.CELL_WIDTH)
+        map_coord_y = int(mapy_pixel / constants.CELL_HEIGHT)
 
         valid_tiles = []
 
@@ -1146,7 +1341,21 @@ def menu_tile_select(coords_origin=None, max_range=None, radius=None,
                     return valid_tiles[-1]
 
         # draw game first
-        draw_game()
+        SURFACE_MAIN.fill(constants.COLOR_DEFAULT_BG)
+        SURFACE_MAP.fill(constants.COLOR_BLACK)
+
+        CAMERA.update(PLAYER)
+
+        # display_rect = pygame.Rect(
+        #     (0 * constants.CELL_WIDTH, 0 * constants.CELL_HEIGHT), 
+        #     (constants.CAMERA_WIDTH, constants.CAMERA_HEIGHT))
+
+        # draw the map
+        draw_map(GAME.current_map)
+
+        # draw all objects
+        for obj in sorted(GAME.current_objects, key = lambda obj: obj.depth, reverse = True):
+            obj.draw()
 
         # draw rectangle at mouse position on top of game
         for (tile_x, tile_y) in valid_tiles:
@@ -1159,6 +1368,11 @@ def menu_tile_select(coords_origin=None, max_range=None, radius=None,
             for tile_x, tile_y in area_effect:
                 draw_tile_rect((tile_x, tile_y),
                                tile_color=constants.COLOR_RED)
+
+        SURFACE_MAIN.blit(SURFACE_MAP, (0, 0), CAMERA.rect)
+
+        draw_messages()
+        draw_debug()
 
         # update the display
         pygame.display.flip()
@@ -1185,6 +1399,7 @@ def gen_player(coords):
     player = obj_Actor(x, y, "python",
                        ASSETS.A_PLAYER,
                        animation_speed=1.0,
+                       depth = 0, 
                        creature=creature_com,
                        container=container_com)
     return player
@@ -1221,6 +1436,7 @@ def gen_scroll_lightning(coords):
 
     return_object = obj_Actor(x, y, "lightning scroll",
                               animation=ASSETS.S_SCROLL_YELLOW,
+                              depth = 2, 
                               item=item_com)
 
     return return_object
@@ -1238,6 +1454,7 @@ def gen_scroll_fireball(coords):
 
     return_object = obj_Actor(x, y, "fireball scroll",
                               animation=ASSETS.S_SCROLL_RED,
+                              depth = 2,
                               item=item_com)
 
     return return_object
@@ -1253,6 +1470,7 @@ def gen_scroll_confusion(coords):
 
     return_object = obj_Actor(x, y, "confusion scroll",
                               animation=ASSETS.S_SCROLL_BLANK,
+                              depth = 2,
                               item=item_com)
 
     return return_object
@@ -1268,6 +1486,7 @@ def gen_weapon_sword(coords):
     return_object = obj_Actor(x, y,
                               "sword",
                               animation=ASSETS.S_SWORD,
+                              depth = 2,
                               equipment=equipment_com)
     return return_object
 
@@ -1282,6 +1501,7 @@ def gen_armor_shield(coords):
     return_object = obj_Actor(x, y,
                               "shield",
                               animation=ASSETS.S_SHIELD,
+                              depth = 2,
                               equipment=equipment_com)
     return return_object
 
@@ -1319,6 +1539,7 @@ def gen_snake_anaconda(coords):
     snake = obj_Actor(x, y, "anaconda",
                       ASSETS.A_SNAKE_01,
                       animation_speed=1.0,
+                      depth = 1,
                       creature=creature_com,
                       ai=ai_com)
 
@@ -1346,6 +1567,7 @@ def gen_snake_cobra(coords):
     cobra = obj_Actor(x, y, "cobra",
                       ASSETS.A_SNAKE_02,
                       animation_speed=1.0,
+                      depth = 1,
                       creature=creature_com,
                       ai=ai_com)
 
@@ -1401,42 +1623,45 @@ def game_main_loop():
 def game_initialize():
     ''' This function initializes the main window and pygame'''
 
-    global SURFACE_MAIN, RAND_INSTANCE, GAME, CLOCK, FOV_CALCULATE, ASSETS, PLAYER
+    global SURFACE_MAIN, SURFACE_MAP, CAMERA, RAND_INSTANCE, CLOCK
+    global ASSETS, GAME, FOV_CALCULATE, PLAYER
 
     # initialize pygame
     pygame.init()
 
     pygame.key.set_repeat(200, 70)
 
-    SURFACE_MAIN = pygame.display.set_mode((constants.MAP_WIDTH*constants.CELL_WIDTH,
-                                            constants.MAP_HEIGHT*constants.CELL_HEIGHT))
-
-    RAND_INSTANCE = None  # tcod.random_new_from_seed(1000)
-
-    GAME = obj_Game()
-
-    CLOCK = pygame.time.Clock()
-
-    FOV_CALCULATE = True
-
-    ASSETS = struc_Assets()
-
     tcod.namegen_parse("data/namegen/jice_celtic.cfg")
     # tcod.namegen_parse("data/namegen/jice_fantasy.cfg")
     # tcod.namegen_parse("data/namegen/jice_mesopotamian.cfg")
 
-    # create scrolls
-    gen_item((2, 2))
-    gen_item((2, 3))
-    gen_item((2, 4))
+    SURFACE_MAIN = pygame.display.set_mode((constants.CAMERA_WIDTH, 
+                                           constants.CAMERA_HEIGHT))
 
-    # create 2 enemies
-    gen_enemy((15, 15))
-    gen_enemy((15, 16))
+    SURFACE_MAP = pygame.Surface((constants.MAP_WIDTH*constants.CELL_WIDTH,
+                                 constants.MAP_HEIGHT*constants.CELL_HEIGHT))
+
+    CAMERA = obj_Camera()
+
+    RAND_INSTANCE = None  # tcod.random_new_from_seed(1000)
+
+    CLOCK = pygame.time.Clock()
+
+    ASSETS = struc_Assets()
+
+    GAME = obj_Game()
+
+    FOV_CALCULATE = True
 
     # create the player
-    PLAYER = gen_player((1, 1))
+    PLAYER = gen_player(GAME.current_rooms[0].center)
     GAME.current_objects.append(PLAYER)
+
+    map_place_objects(GAME.current_rooms)
+
+    print()
+    print("There are " + str(len(GAME.current_rooms)) + " rooms.")
+    print()
 
     print([(obj.display_name + '\n') for obj in GAME.current_objects])
 
@@ -1480,7 +1705,6 @@ def game_handle_keys():
                 return menu_pause()
             if event.key == pygame.K_i:
                 return menu_inventory()
-            # turn on tile selection
             if event.key == pygame.K_l:
                 # return menu_tile_select()
                 return cast_lightning(PLAYER)
@@ -1488,6 +1712,9 @@ def game_handle_keys():
                 return cast_fireball(PLAYER)
             if event.key == pygame.K_c:
                 return cast_confusion(PLAYER)
+            # if event.key == pygame.K_SPACE:
+            #     GAME.current_map, GAME.current_rooms = map_create()
+            #     PLAYER.x, PLAYER.y = GAME.current_rooms[0].center
 
     return "no-action"
 
