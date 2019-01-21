@@ -14,3 +14,6 @@ I'm using several different keywords for spells.
     f = fireball
     To exit the interface for any spell, press ESC or TAB. 
 The tunneling in the tutorial had a bug that added dead ends. Fixed the bug, can create dead ends as a feature later.
+
+TODO:
+BUGFIX: If you press the Red X to close the window while using an item (scroll) from within the inventory menu, the window does not close. The window should close.

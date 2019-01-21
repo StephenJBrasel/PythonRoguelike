@@ -174,8 +174,46 @@ class obj_Game:
     def __init__(self):
         self.current_map, self.current_rooms = map_create()
         self.current_objects = []
-
         self.message_history = []
+        self.maps_previous = []
+        self.maps_next = []
+
+    def transition_next(self):
+        global FOV_CALCULATE
+
+        FOV_CALCULATE = True
+
+        if len(self.maps_next) == 0:
+            
+            self.maps_previous.append(
+                ((PLAYER.x, PLAYER.y),
+                self.current_map,
+                self.current_rooms,
+                self.current_objects))
+
+            self.current_objects = [PLAYER]
+            self.current_map, self.current_rooms = map_create()
+            map_place_objects(self.current_rooms)
+    
+    def transition_previous(self):
+        # make a case for if there are 0 previous levels.
+        if len(self.maps_previous) == 0:
+            game_message("There is no escape. ")
+        else:
+            # self.maps_next.append(
+            #     ((PLAYER.x, PLAYER.y), 
+            #     self.current_map, 
+            #     self.current_rooms, 
+            #     self.current_objects))
+            global FOV_CALCULATE
+
+            ((PLAYER.x, PLAYER.y), self.current_map, self.current_rooms, 
+                self.current_objects) = self.maps_previous[-1]
+            
+            map_make_fov(self.current_map)
+
+            FOV_CALCULATE = True
+        
 
 
 class obj_Spritesheet:
@@ -471,7 +509,7 @@ class com_Item:
         """
         if self.owner.equipment:
             self.owner.equipment.toggle_equip()
-            return
+            return "no-action"
 
         if self.use_function:  # """ == cast_heal """
             result = self.use_function(self.container.owner, self.value)
@@ -479,6 +517,7 @@ class com_Item:
                 print("use_function failed.")
             else:
                 self.container.inventory.remove(self.owner)
+                return result
 
 
 class com_Equipment:
@@ -651,6 +690,11 @@ def map_create():
 
 def map_place_objects(room_list):
     for room in room_list:
+
+        # TODO clarify when PLAYER is centered in a new room
+        # TODO stop enemies from being generated in the room you immediately go into.
+        if room == room_list[0]: 
+            PLAYER.x, PLAYER.y = room.center
         x = tcod.random_get_int(RAND_INSTANCE, room.x1 + 1, room.x2 - 1)
         y = tcod.random_get_int(RAND_INSTANCE, room.y1 + 1, room.y2 - 1)
 
@@ -1228,8 +1272,9 @@ def menu_inventory():
                     if (mouse_in_window and
                             (mouse_line_selection <= len(print_list) - 1)):
                         if item_interact == "use":
-                            PLAYER.container.inventory[mouse_line_selection].item.use(
+                            ret = PLAYER.container.inventory[mouse_line_selection].item.use(
                             )
+                            print(ret)
                             # menu_close = True
                         if item_interact == "drop":
                             if PLAYER.container.inventory[mouse_line_selection].equipment.equipped:
@@ -1624,7 +1669,7 @@ def game_initialize():
     ''' This function initializes the main window and pygame'''
 
     global SURFACE_MAIN, SURFACE_MAP, CAMERA, RAND_INSTANCE, CLOCK
-    global ASSETS, GAME, FOV_CALCULATE, PLAYER
+    global ASSETS, FOV_CALCULATE
 
     # initialize pygame
     pygame.init()
@@ -1649,15 +1694,9 @@ def game_initialize():
 
     ASSETS = struc_Assets()
 
-    GAME = obj_Game()
-
     FOV_CALCULATE = True
 
-    # create the player
-    PLAYER = gen_player(GAME.current_rooms[0].center)
-    GAME.current_objects.append(PLAYER)
-
-    map_place_objects(GAME.current_rooms)
+    game_new()
 
     print()
     print("There are " + str(len(GAME.current_rooms)) + " rooms.")
@@ -1712,9 +1751,11 @@ def game_handle_keys():
                 return cast_fireball(PLAYER)
             if event.key == pygame.K_c:
                 return cast_confusion(PLAYER)
-            # if event.key == pygame.K_SPACE:
-            #     GAME.current_map, GAME.current_rooms = map_create()
-            #     PLAYER.x, PLAYER.y = GAME.current_rooms[0].center
+            if event.key == pygame.K_SPACE:
+                GAME.transition_next()
+                # PLAYER.x, PLAYER.y = GAME.current_rooms[0].center
+            if event.key == pygame.K_o:
+                GAME.transition_previous()
 
     return "no-action"
 
@@ -1722,6 +1763,17 @@ def game_handle_keys():
 def game_message(game_msg, msg_color=constants.COLOR_GREY):
     GAME.message_history.append((game_msg, msg_color))
     print(game_msg)
+
+def game_new():
+
+    global GAME, PLAYER
+    
+    GAME = obj_Game()
+
+    PLAYER = gen_player(GAME.current_rooms[0].center)
+    GAME.current_objects.append(PLAYER)
+
+    map_place_objects(GAME.current_rooms)
 
 
 # Execution
