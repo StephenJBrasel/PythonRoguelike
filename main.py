@@ -2,6 +2,8 @@
 import tcod
 import pygame
 import math
+import pickle
+import gzip
 
 # game files
 import constants
@@ -58,6 +60,21 @@ class struc_Assets:
         self.S_SCROLL_BLANK = self.scroll.get_image('d', 6, 16, 16, (32, 32))
         self.S_FLESH_01 = self.flesh.get_image('b', 4, 16, 16, (32, 32))
 
+        self.animation_dict = {
+            # ANIMATIONS
+            "A_PLAYER":self.A_PLAYER,
+            "A_SNAKE_01":self.A_SNAKE_01,
+            "A_SNAKE_02":self.A_SNAKE_02,
+
+            # ITEMS
+            "S_SWORD":self.S_SWORD,
+            "S_SHIELD":self.S_SHIELD, 
+            "S_SCROLL_YELLOW":self.S_SCROLL_YELLOW,
+            "S_SCROLL_RED":self.S_SCROLL_RED,
+            "S_SCROLL_BLANK":self.S_SCROLL_BLANK,
+            "S_FLESH_01":self.S_FLESH_01 
+        }
+
 
 # Objects
 #  .88888.  dP       oo                     dP
@@ -73,7 +90,7 @@ class struc_Assets:
 class obj_Actor:
     def __init__(self, x, y,
                  name_object,
-                 animation,
+                 animation_key,
                  animation_speed=0.5,
                  depth = 0,
                  creature=None,
@@ -84,7 +101,8 @@ class obj_Actor:
         self.x = x  # Map Address
         self.y = y  # Map Address
         self.name_object = name_object
-        self.animation = animation
+        self.animation_key = animation_key
+        self.animation = ASSETS.animation_dict[self.animation_key]
         # time for entire animation in seconds
         self.animation_speed = animation_speed / 1.0
         self.depth = depth
@@ -169,6 +187,12 @@ class obj_Actor:
 
         self.creature.move(dx, dy)
 
+    def animation_destroy(self):
+        self.animation = None
+
+    def animation_init(self):
+        self.animation = ASSETS.animation_dict[self.animation_key]
+
 
 class obj_Game:
     def __init__(self):
@@ -183,36 +207,64 @@ class obj_Game:
 
         FOV_CALCULATE = True
 
-        if len(self.maps_next) == 0:
+        for obj in self.current_objects:
+            obj.animation_destroy()
             
-            self.maps_previous.append(
-                ((PLAYER.x, PLAYER.y),
-                self.current_map,
-                self.current_rooms,
-                self.current_objects))
+        self.maps_previous.append(
+            ((PLAYER.x, PLAYER.y),
+            self.current_map,
+            self.current_rooms,
+            self.current_objects))
+
+        if len(self.maps_next) == 0:
 
             self.current_objects = [PLAYER]
+
+            PLAYER.animation_init()
+
             self.current_map, self.current_rooms = map_create()
             map_place_objects(self.current_rooms)
-    
-    def transition_previous(self):
-        # make a case for if there are 0 previous levels.
-        if len(self.maps_previous) == 0:
-            game_message("There is no escape. ")
         else:
-            # self.maps_next.append(
-            #     ((PLAYER.x, PLAYER.y), 
-            #     self.current_map, 
-            #     self.current_rooms, 
-            #     self.current_objects))
-            global FOV_CALCULATE
-
             ((PLAYER.x, PLAYER.y), self.current_map, self.current_rooms, 
-                self.current_objects) = self.maps_previous[-1]
+                self.current_objects) = self.maps_next[-1]
+
+            for obj in self.current_objects:
+                obj.animation_init()
             
             map_make_fov(self.current_map)
 
             FOV_CALCULATE = True
+
+            del self.maps_next[-1]
+    
+    def transition_previous(self):
+        # make a case for if there are 0 previous levels.
+        global FOV_CALCULATE
+        if len(self.maps_previous) != 0:
+
+            for obj in self.current_objects:
+                obj.animation_destroy()
+
+            self.maps_next.append(
+                ((PLAYER.x, PLAYER.y), 
+                self.current_map, 
+                self.current_rooms, 
+                self.current_objects))
+            global FOV_CALCULATE
+
+            ((PLAYER.x, PLAYER.y), self.current_map, self.current_rooms, 
+                self.current_objects) = self.maps_previous[-1]
+
+            for obj in self.current_objects:
+                obj.animation_init()
+            
+            map_make_fov(self.current_map)
+
+            FOV_CALCULATE = True
+
+            del self.maps_previous[-1]
+        else:
+            game_message("There is no way to ascend. ")
         
 
 
@@ -492,12 +544,14 @@ class com_Item:
             else:
                 game_message(("Picking up " + self.owner.name_object), constants.COLOR_WHITE)
                 actor.container.inventory.append(self.owner)
+                self.owner.animation_destroy()
                 GAME.current_objects.remove(self.owner)
                 self.container = actor.container
 
     # def drop_item():
     def drop(self, new_x, new_y):
         GAME.current_objects.append(self.owner)
+        self.owner.animation_init()
         self.container.inventory.remove(self.owner)
         self.owner.x = new_x
         self.owner.y = new_y
@@ -624,6 +678,7 @@ def death_snake(monster):
     game_message(monster.creature.name_instance +
                  " is dead!", constants.COLOR_GREY)
     monster.animation = ASSETS.S_FLESH_01
+    monster.animation_key = "S_FLESH_01"
     monster.creature = None
     monster.ai = None
 
@@ -1277,9 +1332,10 @@ def menu_inventory():
                             print(ret)
                             # menu_close = True
                         if item_interact == "drop":
-                            if PLAYER.container.inventory[mouse_line_selection].equipment.equipped:
-                                PLAYER.container.inventory[mouse_line_selection].equipment.unequip(
-                                )
+                            if PLAYER.container.inventory[mouse_line_selection].equipment:
+                                if PLAYER.container.inventory[mouse_line_selection].equipment.equipped:
+                                    PLAYER.container.inventory[mouse_line_selection].equipment.unequip(
+                                    )
                             PLAYER.container.inventory[mouse_line_selection].item.drop(
                                 PLAYER.x, PLAYER.y)
 
@@ -1442,7 +1498,7 @@ def gen_player(coords):
     container_com = com_Container()
     creature_com = com_Creature("greg", base_atk=4)
     player = obj_Actor(x, y, "python",
-                       ASSETS.A_PLAYER,
+                       animation_key="A_PLAYER",
                        animation_speed=1.0,
                        depth = 0, 
                        creature=creature_com,
@@ -1480,7 +1536,7 @@ def gen_scroll_lightning(coords):
     item_com = com_Item(use_function=cast_lightning, value=(damage, m_range))
 
     return_object = obj_Actor(x, y, "lightning scroll",
-                              animation=ASSETS.S_SCROLL_YELLOW,
+                              animation_key="S_SCROLL_YELLOW",
                               depth = 2, 
                               item=item_com)
 
@@ -1498,7 +1554,7 @@ def gen_scroll_fireball(coords):
                         value=(damage, radius, m_range))
 
     return_object = obj_Actor(x, y, "fireball scroll",
-                              animation=ASSETS.S_SCROLL_RED,
+                              animation_key="S_SCROLL_RED",
                               depth = 2,
                               item=item_com)
 
@@ -1514,7 +1570,7 @@ def gen_scroll_confusion(coords):
                         value=effect_length)
 
     return_object = obj_Actor(x, y, "confusion scroll",
-                              animation=ASSETS.S_SCROLL_BLANK,
+                              animation_key="S_SCROLL_BLANK",
                               depth = 2,
                               item=item_com)
 
@@ -1530,7 +1586,7 @@ def gen_weapon_sword(coords):
 
     return_object = obj_Actor(x, y,
                               "sword",
-                              animation=ASSETS.S_SWORD,
+                              animation_key="S_SWORD",
                               depth = 2,
                               equipment=equipment_com)
     return return_object
@@ -1545,7 +1601,7 @@ def gen_armor_shield(coords):
 
     return_object = obj_Actor(x, y,
                               "shield",
-                              animation=ASSETS.S_SHIELD,
+                              animation_key="S_SHIELD",
                               depth = 2,
                               equipment=equipment_com)
     return return_object
@@ -1582,7 +1638,7 @@ def gen_snake_anaconda(coords):
                                 death_function=death_snake)
     ai_com = ai_Chase()
     snake = obj_Actor(x, y, "anaconda",
-                      ASSETS.A_SNAKE_01,
+                      animation_key="A_SNAKE_01",
                       animation_speed=1.0,
                       depth = 1,
                       creature=creature_com,
@@ -1610,7 +1666,7 @@ def gen_snake_cobra(coords):
                                 death_function=death_snake)
     ai_com = ai_Chase()
     cobra = obj_Actor(x, y, "cobra",
-                      ASSETS.A_SNAKE_02,
+                      animation_key="A_SNAKE_02",
                       animation_speed=1.0,
                       depth = 1,
                       creature=creature_com,
@@ -1644,7 +1700,7 @@ def game_main_loop():
         map_calculate_fov()
 
         if player_action == "quit":
-            game_quit = True
+            game_exit()
             break
         # turn-based system
         elif player_action != "no-action":
@@ -1659,10 +1715,6 @@ def game_main_loop():
         pygame.display.flip()
 
         CLOCK.tick(constants.GAME_FPS)
-
-    # TODO quit the game
-    pygame.quit()
-    # exit()
 
 
 def game_initialize():
@@ -1696,13 +1748,17 @@ def game_initialize():
 
     FOV_CALCULATE = True
 
-    game_new()
+    try:
+        game_load()
+    except:
+        game_new()
 
     print()
     print("There are " + str(len(GAME.current_rooms)) + " rooms.")
     print()
 
-    print([(obj.display_name + '\n') for obj in GAME.current_objects])
+    # for obj in GAME.current_objects:
+    #     print(obj.display_name + '\n')
 
 
 def game_handle_keys():
@@ -1764,6 +1820,7 @@ def game_message(game_msg, msg_color=constants.COLOR_GREY):
     GAME.message_history.append((game_msg, msg_color))
     print(game_msg)
 
+
 def game_new():
 
     global GAME, PLAYER
@@ -1774,6 +1831,45 @@ def game_new():
     GAME.current_objects.append(PLAYER)
 
     map_place_objects(GAME.current_rooms)
+
+
+def game_exit():
+
+    game_save()
+
+    # quit the game
+    pygame.quit()
+    # exit()
+
+
+def game_save():
+    global GAME, PLAYER
+
+    for obj in GAME.current_objects:
+        obj.animation_destroy()
+        if obj.container:
+            for objec in obj.container.inventory:
+                objec.animation_destroy()
+
+    with gzip.open("data/savedata/savegame", "wb") as file:
+        pickle.dump([GAME, PLAYER], file)
+
+def game_load():
+    global GAME, PLAYER
+
+    with gzip.open('data/savedata/savegame', 'rb') as file:
+        GAME, PLAYER = pickle.load(file)
+
+    for obj in GAME.current_objects:
+        obj.animation_init()
+        if obj.container:
+            for objec in obj.container.inventory:
+                objec.animation_init()
+    # for obj in PLAYER.container.inventory:
+    #     obj.animation_init()
+        
+
+    map_make_fov(GAME.current_map)
 
 
 # Execution
