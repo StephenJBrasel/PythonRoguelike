@@ -28,9 +28,10 @@ class struc_Assets:
         # SPRITESHEETS
         self.reptiles = obj_Spritesheet("data/graphics/Characters/Reptile.png")
         self.aquatic = obj_Spritesheet("data/graphics/Characters/Aquatic.png")
-        self.aquatic = obj_Spritesheet("data/graphics/Characters/Rodent.png")
+        self.rodent = obj_Spritesheet("data/graphics/Characters/Rodent.png")
         self.wall = obj_Spritesheet("data/graphics/Objects/Wall.png")
         self.floor = obj_Spritesheet("data/graphics/Objects/Floor.png")
+        self.tile = obj_Spritesheet("data/graphics/Objects/Tile.png")
         self.shield = obj_Spritesheet("data/graphics/Items/Shield.png")
         self.medwep = obj_Spritesheet("data/graphics/Items/MedWep.png")
         self.scroll = obj_Spritesheet("data/graphics/Items/Scroll.png")
@@ -43,6 +44,8 @@ class struc_Assets:
             'e', 5, 16, 16, 2, (32, 32))
         self.A_SNAKE_02 = self.reptiles.get_animation(
             'k', 5, 16, 16, 2, (32, 32))
+        self.A_MOUSE = self.rodent.get_animation(
+            'a', 2, 16, 16, 2, (32, 32))
 
         # SPRITES
         self.S_WALL = self.wall.get_image('d', 7, 16, 16, (32, 32))[0]
@@ -59,12 +62,19 @@ class struc_Assets:
         self.S_SCROLL_RED = self.scroll.get_image('c', 2, 16, 16, (32, 32))
         self.S_SCROLL_BLANK = self.scroll.get_image('d', 6, 16, 16, (32, 32))
         self.S_FLESH_01 = self.flesh.get_image('b', 4, 16, 16, (32, 32))
+        self.S_FLESH_02 = self.flesh.get_image('a', 1, 16, 16, (32, 32))
+
+        # SPECIAL
+        self.S_STAIRS_DOWN = self.tile.get_image('f', 4, 16, 16, (32, 32))
+        self.S_STAIRS_UP = self.tile.get_image('e', 4, 16, 16, (32, 32))
+
 
         self.animation_dict = {
             # ANIMATIONS
             "A_PLAYER":self.A_PLAYER,
             "A_SNAKE_01":self.A_SNAKE_01,
             "A_SNAKE_02":self.A_SNAKE_02,
+            "A_MOUSE":self.A_MOUSE,
 
             # ITEMS
             "S_SWORD":self.S_SWORD,
@@ -72,7 +82,12 @@ class struc_Assets:
             "S_SCROLL_YELLOW":self.S_SCROLL_YELLOW,
             "S_SCROLL_RED":self.S_SCROLL_RED,
             "S_SCROLL_BLANK":self.S_SCROLL_BLANK,
-            "S_FLESH_01":self.S_FLESH_01 
+            "S_FLESH_01":self.S_FLESH_01,
+            "S_FLESH_02":self.S_FLESH_02,
+
+            # SPECIAL
+            "S_STAIRS_DOWN":self.S_STAIRS_DOWN,
+            "S_STAIRS_UP":self.S_STAIRS_UP 
         }
 
 
@@ -97,7 +112,8 @@ class obj_Actor:
                  ai=None,
                  container=None,
                  item=None,
-                 equipment=None):
+                 equipment=None,
+                 stairs=None):
         self.x = x  # Map Address
         self.y = y  # Map Address
         self.name_object = name_object
@@ -134,6 +150,10 @@ class obj_Actor:
 
             self.item = com_Item()
             self.item.owner = self
+
+        self.stairs = stairs
+        if self.stairs:
+            self.stairs.owner = self
 
     @property
     def display_name(self):
@@ -179,6 +199,17 @@ class obj_Actor:
     def move_towards(self, other):
         dx = other.x - self.x
         dy = other.y - self.y
+
+        distance = math.sqrt((dx*dx) + (dy*dy))
+
+        dx = int(round(dx / distance))
+        dy = int(round(dy / distance))
+
+        self.creature.move(dx, dy)
+
+    def move_away(self, other):
+        dx = self.x - other.x
+        dy = self.y - other.y
 
         distance = math.sqrt((dx*dx) + (dy*dy))
 
@@ -453,6 +484,8 @@ class com_Creature:
     def attack(self, target):
 
         damage_dealt = self.power - target.creature.defense
+        if damage_dealt < 0:
+            damage_dealt = 0
         # TODO if no damage is being dealt, display an appropriate message.
 
         game_message((self.owner.display_name + " attacks " +
@@ -612,6 +645,18 @@ class com_Equipment:
         game_message("Item unequipped")
 
 
+class com_Stairs:
+    def __init__(self,
+            downwards=True):
+        self.downwards = downwards
+
+    def use(self):
+        if self.downwards:
+            GAME.transition_next()
+        else:
+            GAME.transition_previous()
+
+
 # AI
 #  .d888888  dP
 # d8'    88  88
@@ -664,6 +709,21 @@ class ai_Chase:
                 monster.creature.attack(PLAYER)
 
 
+class ai_Flee:
+    """  
+    AI needs to continuously moves toward target (PLAYER).
+
+    Gets list of coords from self to target, 
+    each turn move 1 coord closer to target.
+    """
+
+    def take_turn(self):
+        monster = self.owner
+
+        if tcod.map_is_in_fov(FOV_MAP, monster.x, monster.y):
+            self.owner.move_away(PLAYER)
+
+
 # Death
 # 888888ba                      dP   dP
 # 88    `8b                     88   88
@@ -679,8 +739,22 @@ def death_snake(monster):
                  " is dead!", constants.COLOR_GREY)
     monster.animation = ASSETS.S_FLESH_01
     monster.animation_key = "S_FLESH_01"
+    monster.depth = constants.DEPTH_CORPSE
     monster.creature = None
     monster.ai = None
+
+
+def death_mouse(mouse):
+    """ On death, most monsters stop moving. """
+    game_message(mouse.creature.name_instance +
+                 " is dead! Eat him for more health!", 
+                 constants.COLOR_GREEN)
+    mouse.animation = ASSETS.S_FLESH_02
+    mouse.animation_key = "S_FLESH_02"
+    mouse.depth = constants.DEPTH_CORPSE
+    mouse.creature = None
+    mouse.ai = None
+
 
 # Map
 # 8888ba.88ba
@@ -744,12 +818,24 @@ def map_create():
 
 
 def map_place_objects(room_list):
+
+    is_top_level = (len(GAME.maps_previous) == 0)
+
     for room in room_list:
 
         # TODO clarify when PLAYER is centered in a new room
         # TODO stop enemies from being generated in the room you immediately go into.
-        if room == room_list[0]: 
+        is_first_room = (room == room_list[0])
+        is_last_room = (room == room_list[-1])
+
+        if is_first_room: 
             PLAYER.x, PLAYER.y = room.center
+        if is_first_room and not is_top_level:
+            gen_stairs((PLAYER.x, PLAYER.y), downwards=False)
+
+        if is_last_room:
+            gen_stairs(room.center)
+        
         x = tcod.random_get_int(RAND_INSTANCE, room.x1 + 1, room.x2 - 1)
         y = tcod.random_get_int(RAND_INSTANCE, room.y1 + 1, room.y2 - 1)
 
@@ -1124,16 +1210,16 @@ def helper_text_width(font, text):
 #                        d8888P
 
 
-def cast_heal(target, value):
+def cast_heal(caster, value):
 
-    if target.creature.hp >= target.creature.maxhp:
-        game_message(target.display_name +
+    if caster.creature.hp >= caster.creature.maxhp:
+        game_message(caster.display_name +
                      " is already at full health!")
         return "cancelled"
     else:
-        game_message(target.display_name +
+        game_message(caster.display_name +
                      " healed for " + str(value) + " health!")
-        target.creature.heal(value)
+        caster.creature.heal(value)
     return None
 
 
@@ -1500,10 +1586,32 @@ def gen_player(coords):
     player = obj_Actor(x, y, "python",
                        animation_key="A_PLAYER",
                        animation_speed=1.0,
-                       depth = 0, 
+                       depth = constants.DEPTH_PLAYER, 
                        creature=creature_com,
                        container=container_com)
     return player
+
+
+# SPECIAL
+
+def gen_stairs(coords, downwards = True):
+    x, y = coords
+
+    if downwards:
+        stairs_com = com_Stairs(downwards) 
+        stairs = obj_Actor(x, y, "stairs", 
+            animation_key = "S_STAIRS_DOWN",
+            depth=constants.DEPTH_BKGD,
+            stairs = stairs_com)
+    else:
+        stairs_com = com_Stairs(downwards) 
+        stairs = obj_Actor(x, y, "stairs", 
+            animation_key = "S_STAIRS_UP",
+            depth=constants.DEPTH_BKGD,
+            stairs = stairs_com)
+
+    GAME.current_objects.append(stairs)
+    
 
 
 # ITEMS
@@ -1537,7 +1645,7 @@ def gen_scroll_lightning(coords):
 
     return_object = obj_Actor(x, y, "lightning scroll",
                               animation_key="S_SCROLL_YELLOW",
-                              depth = 2, 
+                              depth = constants.DEPTH_ITEM, 
                               item=item_com)
 
     return return_object
@@ -1555,7 +1663,7 @@ def gen_scroll_fireball(coords):
 
     return_object = obj_Actor(x, y, "fireball scroll",
                               animation_key="S_SCROLL_RED",
-                              depth = 2,
+                              depth = constants.DEPTH_ITEM,
                               item=item_com)
 
     return return_object
@@ -1571,7 +1679,7 @@ def gen_scroll_confusion(coords):
 
     return_object = obj_Actor(x, y, "confusion scroll",
                               animation_key="S_SCROLL_BLANK",
-                              depth = 2,
+                              depth = constants.DEPTH_ITEM,
                               item=item_com)
 
     return return_object
@@ -1587,7 +1695,7 @@ def gen_weapon_sword(coords):
     return_object = obj_Actor(x, y,
                               "sword",
                               animation_key="S_SWORD",
-                              depth = 2,
+                              depth = constants.DEPTH_ITEM,
                               equipment=equipment_com)
     return return_object
 
@@ -1602,7 +1710,7 @@ def gen_armor_shield(coords):
     return_object = obj_Actor(x, y,
                               "shield",
                               animation_key="S_SHIELD",
-                              depth = 2,
+                              depth = constants.DEPTH_ITEM,
                               equipment=equipment_com)
     return return_object
 
@@ -1614,6 +1722,8 @@ def gen_enemy(coords):
 
     if (random_num <= 15):
         new_enemy = gen_snake_cobra(coords)
+    elif (random_num <= 50):
+        new_enemy = gen_mouse(coords)
     else:
         new_enemy = gen_snake_anaconda(coords)
 
@@ -1640,7 +1750,7 @@ def gen_snake_anaconda(coords):
     snake = obj_Actor(x, y, "anaconda",
                       animation_key="A_SNAKE_01",
                       animation_speed=1.0,
-                      depth = 1,
+                      depth = constants.DEPTH_CREATURE,
                       creature=creature_com,
                       ai=ai_com)
 
@@ -1668,11 +1778,44 @@ def gen_snake_cobra(coords):
     cobra = obj_Actor(x, y, "cobra",
                       animation_key="A_SNAKE_02",
                       animation_speed=1.0,
-                      depth = 1,
+                      depth = constants.DEPTH_CREATURE,
                       creature=creature_com,
                       ai=ai_com)
 
     return cobra
+
+
+def gen_mouse(coords):
+    # create an enemy
+    x, y = coords
+
+    max_health = 1
+    base_attack = 0
+    base_defense = 0 #tcod.random_get_int(RAND_INSTANCE, 0, 1)
+
+    generated_name = tcod.namegen_generate("Celtic male")
+
+
+    # item_com1 = com_Item(value=4, use_function=cast_heal)
+    creature_com = com_Creature(generated_name, 
+                                base_atk=base_attack, 
+                                base_def=base_defense, 
+                                hp=max_health,
+                                death_function=death_mouse)
+    ai_com = ai_Flee()
+
+    item_com = com_Item(use_function = cast_heal, 
+        value=2)
+    mouse = obj_Actor(x, y, "mouse",
+                      animation_key="A_MOUSE",
+                      animation_speed=1.0,
+                      depth = constants.DEPTH_CREATURE,
+                      creature=creature_com,
+                      item=item_com,
+                      ai=ai_com)
+
+    return mouse
+
 
 
 # Game
@@ -1764,7 +1907,12 @@ def game_initialize():
 def game_handle_keys():
     global FOV_CALCULATE
     # get player input
+    keys_list = pygame.key.get_pressed()
     events_list = pygame.event.get()
+
+    # Check for mod key
+    MOD_KEY = (keys_list[pygame.K_RSHIFT] or 
+               keys_list[pygame.K_LSHIFT])
 
     for event in events_list:
         if event.type == pygame.QUIT:
@@ -1807,11 +1955,16 @@ def game_handle_keys():
                 return cast_fireball(PLAYER)
             if event.key == pygame.K_c:
                 return cast_confusion(PLAYER)
-            if event.key == pygame.K_SPACE:
-                GAME.transition_next()
-                # PLAYER.x, PLAYER.y = GAME.current_rooms[0].center
-            if event.key == pygame.K_o:
-                GAME.transition_previous()
+            if MOD_KEY and event.key == pygame.K_PERIOD:
+                list_of_objs = map_objects_at_coords(PLAYER.x, PLAYER.y)
+                for obj in list_of_objs:
+                    if obj.stairs:
+                        obj.stairs.use()
+            # if event.key == pygame.K_SPACE:
+            #     GAME.transition_next()
+            #     # PLAYER.x, PLAYER.y = GAME.current_rooms[0].center
+            # if event.key == pygame.K_o:
+            #     GAME.transition_previous()
 
     return "no-action"
 

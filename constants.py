@@ -42,6 +42,13 @@ FONT_DEBUG_MESSAGE = pygame.font.Font("data/joystix monospace.ttf", 20)
 FONT_MESSAGE_TEXT = pygame.font.Font("data/joystix monospace.ttf", 12)
 FONT_CURSOR_TEXT = pygame.font.Font("data/joystix monospace.ttf", CELL_HEIGHT)
 
+# DEPTHS
+DEPTH_PLAYER = -100
+DEPTH_CREATURE = 1
+DEPTH_ITEM = 2
+DEPTH_CORPSE = 100
+DEPTH_BKGD = 150
+
 # FOV SETTINGS
 FOV_ALGO = 0
 FOV_LIGHT_WALLS = True
