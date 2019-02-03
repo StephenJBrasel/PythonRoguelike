@@ -1,0 +1,181 @@
+Creded the cobra attacks greg the python for 5 damage!
+greg the python's health is 5/10
+Creded the cobra attacks greg the python for 5 damage!
+greg the python's health is 0/10
+----------
+Agnona the anaconda attacks greg the python for 1 damage!
+greg the python's health is 9/10
+Agnona the anaconda attacks greg the python for 1 damage!
+greg the python's health is 8/10
+Agnona the anaconda attacks greg the python for 1 damage!
+greg the python's health is 7/10
+Agnona the anaconda attacks greg the python for 1 damage!
+greg the python's health is 6/10
+Agnona the anaconda attacks greg the python for 1 damage!
+greg the python's health is 5/10
+Agnona the anaconda attacks greg the python for 1 damage!
+greg the python's health is 4/10
+Agnona the anaconda attacks greg the python for 1 damage!
+greg the python's health is 3/10
+Agnona the anaconda attacks greg the python for 1 damage!
+greg the python's health is 2/10
+Agnona the anaconda attacks greg the python for 1 damage!
+greg the python's health is 1/10
+Agnona the anaconda attacks greg the python for 1 damage!
+greg the python's health is 0/10
+----------
+greg the python attacks Brigid the anaconda for 4 damage!
+Brigid the anaconda's health is 5/9
+Brigid the anaconda attacks greg the python for 3 damage!
+greg the python's health is 7/10
+Brigid the anaconda attacks greg the python for 3 damage!
+greg the python's health is 4/10
+Brigid the anaconda attacks greg the python for 3 damage!
+greg the python's health is 1/10
+Brigid the anaconda attacks greg the python for 3 damage!
+greg the python's health is -2/10
+----------
+Alleth the cobra attacks greg the python for 4 damage!
+greg the python's health is 6/10
+Alleth the cobra attacks greg the python for 4 damage!
+greg the python's health is 2/10
+Alleth the cobra attacks greg the python for 4 damage!
+greg the python's health is -2/10
+----------
+Eochna the anaconda attacks greg the python for 2 damage!
+greg the python's health is 8/10
+Eochna the anaconda attacks greg the python for 2 damage!
+greg the python's health is 6/10
+Eochna the anaconda attacks greg the python for 2 damage!
+greg the python's health is 4/10
+Eochna the anaconda attacks greg the python for 2 damage!
+greg the python's health is 2/10
+Eochna the anaconda attacks greg the python for 2 damage!
+greg the python's health is 0/10
+----------
+Delthach the cobra attacks greg the python for 4 damage!
+greg the python's health is 6/10
+Delthach the cobra attacks greg the python for 4 damage!
+greg the python's health is 2/10
+Delthach the cobra attacks greg the python for 4 damage!
+greg the python's health is -2/10
+----------
+Alligiu the anaconda attacks greg the python for 3 damage!
+greg the python's health is 7/10
+Alligiu the anaconda attacks greg the python for 3 damage!
+greg the python's health is 4/10
+Alligiu the anaconda attacks greg the python for 3 damage!
+greg the python's health is 1/10
+Alligiu the anaconda attacks greg the python for 3 damage!
+greg the python's health is -2/10
+----------
+Allarid the anaconda attacks greg the python for 1 damage!
+greg the python's health is 9/10
+Allarid the anaconda attacks greg the python for 1 damage!
+greg the python's health is 8/10
+Allarid the anaconda attacks greg the python for 1 damage!
+greg the python's health is 7/10
+Allarid the anaconda attacks greg the python for 1 damage!
+greg the python's health is 6/10
+Allarid the anaconda attacks greg the python for 1 damage!
+greg the python's health is 5/10
+Allarid the anaconda attacks greg the python for 1 damage!
+greg the python's health is 4/10
+Allarid the anaconda attacks greg the python for 1 damage!
+greg the python's health is 3/10
+Allarid the anaconda attacks greg the python for 1 damage!
+greg the python's health is 2/10
+Allarid the anaconda attacks greg the python for 1 damage!
+greg the python's health is 1/10
+Allarid the anaconda attacks greg the python for 1 damage!
+greg the python's health is 0/10
+----------
+Brigai the anaconda attacks greg the python for 3 damage!
+greg the python's health is 7/10
+greg the python attacks Brigai the anaconda for 4 damage!
+Brigai the anaconda's health is 1/5
+Brigai the anaconda attacks greg the python for 3 damage!
+greg the python's health is 4/10
+greg the python attacks Brigai the anaconda for 4 damage!
+Brigai the anaconda's health is -3/5
+Brigai is dead!
+Picking up fireball scroll
+greg the python attacks Beoiglam the mouse for 4 damage!
+Beoiglam the mouse's health is -3/1
+Beoiglam is dead! Eat him for more health!
+Picking up mouse
+Picking up confusion scroll
+greg the python attacks Taargus the mouse for 4 damage!
+Taargus the mouse's health is -3/1
+Taargus is dead! Eat him for more health!
+Picking up mouse
+Picking up confusion scroll
+greg the python healed for 2 health!
+greg the python's health is 6/10
+greg the python healed for 2 health!
+greg the python's health is 8/10
+Brigne the anaconda's health is 4/7
+Screams of pain echo around you.
+Brigne the anaconda's eyes glaze over
+greg the python attacks Brigne the anaconda for 4 damage!
+Brigne the anaconda's health is 0/7
+Brigne is dead!
+Picking up fireball scroll
+greg the python attacks Morrboth the mouse for 4 damage!
+Morrboth the mouse's health is -3/1
+Morrboth is dead! Eat him for more health!
+Picking up mouse
+Picking up sword
+Item equipped
+Item dropped
+Item dropped
+Item dropped
+Picking up confusion scroll
+Picking up fireball scroll
+Picking up mouse
+greg the python attacks Brigne the anaconda for 6 damage!
+Brigne the anaconda's health is 0/6
+Brigne is dead!
+Picking up lightning scroll
+Beobaod the cobra's health is 14/16
+Screams of pain echo around you.
+Beobaod the cobra's health is 9/16
+greg the python healed for 2 health!
+greg the python's health is 10/10
+Beobaod the cobra's eyes glaze over
+Beobaod the cobra attacks greg the python for 3 damage!
+greg the python's health is 7/10
+greg the python attacks Beobaod the cobra for 6 damage!
+Beobaod the cobra's health is 3/16
+greg the python attacks Beobaod the cobra for 6 damage!
+Beobaod the cobra's health is -3/16
+Beobaod is dead!
+Picking up confusion scroll
+greg the python attacks Morriu the anaconda for 6 damage!
+Morriu the anaconda's health is 1/7
+Morriu the anaconda attacks greg the python for 3 damage!
+greg the python's health is 4/10
+greg the python attacks Morriu the anaconda for 6 damage!
+Morriu the anaconda's health is -5/7
+Morriu is dead!
+Picking up lightning scroll
+Nemigna the anaconda's health is -1/6
+Nemigna is dead!
+Picking up fireball scroll
+Picking up lightning scroll
+greg the python attacks Elaboid the anaconda for 6 damage!
+Elaboid the anaconda's health is 0/6
+Elaboid is dead!
+Picking up lightning scroll
+Agnoana the anaconda's health is 8/10
+Screams of pain echo around you.
+Agnoana the anaconda's health is 1/10
+Agnoana the anaconda's health is -6/10
+Agnoana is dead!
+Picking up lightning scroll
+Aenbaan the anaconda's health is 3/9
+Aenbaan the anaconda attacks greg the python for 2 damage!
+greg the python's health is 2/10
+Aenbaan the anaconda attacks greg the python for 2 damage!
+greg the python's health is 0/10
+----------

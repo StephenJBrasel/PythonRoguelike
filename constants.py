@@ -13,11 +13,12 @@ CELL_HEIGHT = 32
 GAME_FPS = 60
 
 # MAP LIMITATIONS
-MAP_WIDTH = 50
-MAP_HEIGHT = 50
+MAP_WIDTH = 20
+MAP_HEIGHT = 20
 MAP_MAX_NUM_ROOMS = 10
 # MAP_MIN_NUM_ROOMS = 10
 MAP_BORDER_WIDTH = 2
+MAP_NUM_LEVELS = 2
 
 # ROOM LIMITATIONS
 ROOM_MAX_HEIGHT = 7
@@ -31,6 +32,7 @@ COLOR_ALPHA = 150
 COLOR_BLACK = (0, 0, 0)
 COLOR_WHITE = (255, 255, 255)
 COLOR_GREY = (100, 100, 100)
+COLOR_DGREY = (50, 50, 50)
 COLOR_RED = (255, 0, 0)
 COLOR_GREEN = (0, 255, 0)
 
@@ -38,9 +40,10 @@ COLOR_GREEN = (0, 255, 0)
 COLOR_DEFAULT_BG = COLOR_GREY
 
 # FONTS
-FONT_DEBUG_MESSAGE = pygame.font.Font("data/joystix monospace.ttf", 20)
-FONT_MESSAGE_TEXT = pygame.font.Font("data/joystix monospace.ttf", 12)
-FONT_CURSOR_TEXT = pygame.font.Font("data/joystix monospace.ttf", CELL_HEIGHT)
+FONT_TITLE_SCREEN = pygame.font.Font("data/fonts/joystix monospace.ttf", 26)
+FONT_DEBUG_MESSAGE = pygame.font.Font("data/fonts/joystix monospace.ttf", 20)
+FONT_MESSAGE_TEXT = pygame.font.Font("data/fonts/joystix monospace.ttf", 12)
+FONT_CURSOR_TEXT = pygame.font.Font("data/fonts/joystix monospace.ttf", CELL_HEIGHT)
 
 # DEPTHS
 DEPTH_PLAYER = -100

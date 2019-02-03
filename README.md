@@ -15,5 +15,9 @@ I'm using several different keywords for spells.
     To exit the interface for any spell, press ESC or TAB. 
 The tunneling in the tutorial had a bug that added dead ends. Fixed the bug, can create dead ends as a feature later.
 
+ATTRIBUTIONS:
+Music from Jukedeck - create your own at http://jukedeck.com.
+Main Menu background: By: Tontan Travel Link: www.tontantravel.com/
+
 TODO:
 BUGFIX: If you press the Red X to close the window while using an item (scroll) from within the inventory menu, the window does not close. The window should close.
