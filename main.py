@@ -27,8 +27,8 @@ class struc_Tile:
 
 class struc_Preferences:
     def __init__(self,
-            vol_music = 0.1,
-            vol_sound = 0.5):
+                 vol_music=0.1,
+                 vol_sound=0.5):
         self.vol_music = vol_music
         self.vol_sound = vol_sound
 
@@ -48,15 +48,15 @@ class obj_Actor:
                  name_object,
                  animation_key,
                  animation_speed=0.5,
-                 depth = 0,
-                 state = None,
+                 depth=0,
+                 state=None,
                  creature=None,
                  ai=None,
                  container=None,
                  item=None,
                  equipment=None,
                  stairs=None,
-                 exitportal = None):
+                 exitportal=None):
         self.x = x  # Map Address
         self.y = y  # Map Address
         self.name_object = name_object
@@ -188,12 +188,12 @@ class obj_Game:
 
         for obj in self.current_objects:
             obj.animation_destroy()
-            
+
         self.maps_previous.append(
             ((PLAYER.x, PLAYER.y),
-            self.current_map,
-            self.current_rooms,
-            self.current_objects))
+             self.current_map,
+             self.current_rooms,
+             self.current_objects))
 
         if len(self.maps_next) == 0:
 
@@ -204,18 +204,18 @@ class obj_Game:
             self.current_map, self.current_rooms = map_create()
             map_place_objects(self.current_rooms)
         else:
-            ((PLAYER.x, PLAYER.y), self.current_map, self.current_rooms, 
+            ((PLAYER.x, PLAYER.y), self.current_map, self.current_rooms,
                 self.current_objects) = self.maps_next[-1]
 
             for obj in self.current_objects:
                 obj.animation_init()
-            
+
             map_make_fov(self.current_map)
 
             FOV_CALCULATE = True
 
             del self.maps_next[-1]
-    
+
     def transition_previous(self):
         # make a case for if there are 0 previous levels.
         global FOV_CALCULATE
@@ -225,18 +225,18 @@ class obj_Game:
                 obj.animation_destroy()
 
             self.maps_next.append(
-                ((PLAYER.x, PLAYER.y), 
-                self.current_map, 
-                self.current_rooms, 
-                self.current_objects))
+                ((PLAYER.x, PLAYER.y),
+                 self.current_map,
+                 self.current_rooms,
+                 self.current_objects))
             global FOV_CALCULATE
 
-            ((PLAYER.x, PLAYER.y), self.current_map, self.current_rooms, 
+            ((PLAYER.x, PLAYER.y), self.current_map, self.current_rooms,
                 self.current_objects) = self.maps_previous[-1]
 
             for obj in self.current_objects:
                 obj.animation_init()
-            
+
             map_make_fov(self.current_map)
 
             FOV_CALCULATE = True
@@ -244,7 +244,7 @@ class obj_Game:
             del self.maps_previous[-1]
         else:
             game_message("There is no way to ascend. ")
-        
+
 
 class obj_Spritesheet:
     """ Class used to grab images out of a sprite sheet.
@@ -307,19 +307,20 @@ class obj_Room:
     """
     This is a rectangle that lives on the map
     """
+
     def __init__(self, T_coords, T_size):
         self.x1, self.y1 = T_coords
         self.w, self.h = T_size
 
         self.x2 = self.x1 + self.w
         self.y2 = self.y1 + self.h
-    
+
     @property
     def center(self):
-        center_x = int((self.x1 + self.x2)* 0.5)
-        center_y = int((self.y1 + self.y2)* 0.5)
+        center_x = int((self.x1 + self.x2) * 0.5)
+        center_y = int((self.y1 + self.y2) * 0.5)
         return (center_x, center_y)
-    
+
     def intersect(self, other):
         # return True if other object intersects with this one.
         obj_intersect = (self.x1 <= other.x2 and self.x2 >= other.x1 and
@@ -328,7 +329,7 @@ class obj_Room:
 
 
 class obj_Camera:
-    def __init__(self, follow_speed = 0.1):
+    def __init__(self, follow_speed=0.1):
         self.x, self.y = (0, 0)
         self.width = constants.CAMERA_WIDTH
         self.height = constants.CAMERA_HEIGHT
@@ -336,8 +337,8 @@ class obj_Camera:
 
     @property
     def rect(self):
-        pos_rect = pygame.Rect((0, 0), 
-            (constants.CAMERA_WIDTH, constants.CAMERA_HEIGHT))
+        pos_rect = pygame.Rect((0, 0),
+                               (constants.CAMERA_WIDTH, constants.CAMERA_HEIGHT))
 
         pos_rect.center = (self.x, self.y)
 
@@ -352,8 +353,10 @@ class obj_Camera:
 
     def update(self, T_target):
 
-        target_x = T_target.x * constants.CELL_WIDTH + int(constants.CELL_WIDTH/2)
-        target_y = T_target.y * constants.CELL_HEIGHT + int(constants.CELL_HEIGHT/2)
+        target_x = T_target.x * constants.CELL_WIDTH + \
+            int(constants.CELL_WIDTH/2)
+        target_y = T_target.y * constants.CELL_HEIGHT + \
+            int(constants.CELL_HEIGHT/2)
 
         distance_x, distance_y = self.map_dist((target_x, target_y))
 
@@ -374,7 +377,7 @@ class obj_Camera:
 
     def map_dist(self, T_coords):
         new_x, new_y = T_coords
-        
+
         dist_x = new_x - self.x
         dist_y = new_y - self.y
 
@@ -394,7 +397,6 @@ class obj_Assets:
         self.volume_adjust()
 
     def load_assets(self):
-
         """ ART """
         # SPRITESHEETS
         self.reptiles = obj_Spritesheet("data/graphics/Characters/Reptile.png")
@@ -419,6 +421,8 @@ class obj_Assets:
             'k', 5, 16, 16, 2, (32, 32))
         self.A_MOUSE = self.rodent.get_animation(
             'a', 2, 16, 16, 2, (32, 32))
+        self.A_PLATINO = self.rodent.get_animation(
+            'g', 13, 16, 16, 2, (32, 32))
 
         # SPRITES
         self.S_WALL = self.wall.get_image('d', 7, 16, 16, (32, 32))[0]
@@ -440,9 +444,10 @@ class obj_Assets:
         # SPECIAL
         self.S_STAIRS_DOWN = self.tile.get_image('f', 4, 16, 16, (32, 32))
         self.S_STAIRS_UP = self.tile.get_image('e', 4, 16, 16, (32, 32))
-        self.I_MAIN_MENU_BG = pygame.image.load("data/graphics/game/mainmenu.jpg")
-        self.I_MAIN_MENU_BG = pygame.transform.scale(self.I_MAIN_MENU_BG, 
-            (constants.CAMERA_WIDTH, constants.CAMERA_HEIGHT))
+        self.I_MAIN_MENU_BG = pygame.image.load(
+            "data/graphics/game/mainmenu.jpg")
+        self.I_MAIN_MENU_BG = pygame.transform.scale(self.I_MAIN_MENU_BG,
+                                                     (constants.CAMERA_WIDTH, constants.CAMERA_HEIGHT))
         self.S_MAGIC_LAMP = self.misc.get_image('e', 1, 16, 16, (32, 32))
         self.S_PORTAL_CLOSED = self.doors.get_image('j', 6, 16, 16, (32, 32))
         self.A_PORTAL_OPEN = self.doors.get_animation(
@@ -450,31 +455,32 @@ class obj_Assets:
 
         self.animation_dict = {
             # ANIMATIONS
-            "A_PLAYER":self.A_PLAYER,
-            "A_SNAKE_01":self.A_SNAKE_01,
-            "A_SNAKE_02":self.A_SNAKE_02,
-            "A_MOUSE":self.A_MOUSE,
+            "A_PLAYER": self.A_PLAYER,
+            "A_SNAKE_01": self.A_SNAKE_01,
+            "A_SNAKE_02": self.A_SNAKE_02,
+            "A_MOUSE": self.A_MOUSE,
+            "A_PLATINO": self.A_PLATINO,
 
             # ITEMS
-            "S_SWORD":self.S_SWORD,
-            "S_SHIELD":self.S_SHIELD, 
-            "S_SCROLL_YELLOW":self.S_SCROLL_YELLOW,
-            "S_SCROLL_RED":self.S_SCROLL_RED,
-            "S_SCROLL_BLANK":self.S_SCROLL_BLANK,
-            "S_FLESH_01":self.S_FLESH_01,
-            "S_FLESH_02":self.S_FLESH_02,
+            "S_SWORD": self.S_SWORD,
+            "S_SHIELD": self.S_SHIELD,
+            "S_SCROLL_YELLOW": self.S_SCROLL_YELLOW,
+            "S_SCROLL_RED": self.S_SCROLL_RED,
+            "S_SCROLL_BLANK": self.S_SCROLL_BLANK,
+            "S_FLESH_01": self.S_FLESH_01,
+            "S_FLESH_02": self.S_FLESH_02,
 
             # SPECIAL
-            "S_STAIRS_DOWN":self.S_STAIRS_DOWN,
-            "S_STAIRS_UP":self.S_STAIRS_UP,
-            "S_MAGIC_LAMP":self.S_MAGIC_LAMP,
-            "S_PORTAL_CLOSED":self.S_PORTAL_CLOSED,
-            "A_PORTAL_OPEN":self.A_PORTAL_OPEN
+            "S_STAIRS_DOWN": self.S_STAIRS_DOWN,
+            "S_STAIRS_UP": self.S_STAIRS_UP,
+            "S_MAGIC_LAMP": self.S_MAGIC_LAMP,
+            "S_PORTAL_CLOSED": self.S_PORTAL_CLOSED,
+            "A_PORTAL_OPEN": self.A_PORTAL_OPEN
         }
 
         """ AUDIO """
 
-        # Audio 
+        # Audio
         self.music_background = "data/Audio/Boundless_Protest.mp3"
         # Sound
         self.snd_list = []
@@ -555,7 +561,8 @@ class com_Creature:
         target.creature.take_damage(damage_dealt)
 
         if damage_dealt > 0 and self.owner is PLAYER:
-            hit_effect = tcod.random_get_int(RAND_INSTANCE, 0, len(ASSETS.snd_hit_list) - 1)
+            hit_effect = tcod.random_get_int(
+                RAND_INSTANCE, 0, len(ASSETS.snd_hit_list) - 1)
             pygame.mixer.Sound.play(ASSETS.snd_hit_list[hit_effect])
 
     def take_damage(self, damage):
@@ -625,12 +632,12 @@ class com_Container:
 
 
 class com_Item:
-    def __init__(self, 
-            weight=0.0, 
-            volume=0.0, 
-            use_function=None,
-            value=None
-            ):
+    def __init__(self,
+                 weight=0.0,
+                 volume=0.0,
+                 use_function=None,
+                 value=None
+                 ):
         self.weight = weight
         self.volume = volume
         self.value = value
@@ -643,7 +650,8 @@ class com_Item:
             if actor.container.volume + self.volume > actor.container.max_volume:
                 game_message("Not enough room to pick up", constants.COLOR_RED)
             else:
-                game_message(("Picking up " + self.owner.name_object), constants.COLOR_WHITE)
+                game_message(
+                    ("Picking up " + self.owner.name_object), constants.COLOR_WHITE)
                 actor.container.inventory.append(self.owner)
                 self.owner.animation_destroy()
                 GAME.current_objects.remove(self.owner)
@@ -715,7 +723,7 @@ class com_Equipment:
 
 class com_Stairs:
     def __init__(self,
-            downwards=True):
+                 downwards=True):
         self.downwards = downwards
 
     def use(self):
@@ -756,6 +764,45 @@ class com_ExitPortal:
         #     self.owner.state = "CLOSED"
         #     self.owner.animation_key = self.CLOSEDANIMATION
         #     self.owner.animation_init()
+
+    def use(self):
+        if self.owner.state == "OPEN":
+            PLAYER.state = "STATUS_WIN"
+
+            # display game over
+            SURFACE_MAIN.fill(constants.COLOR_WHITE)
+            screen_center = (int(constants.CAMERA_WIDTH*0.5),
+                             int(constants.CAMERA_HEIGHT*0.5))
+            draw_text(SURFACE_MAIN,
+                      "YOU WON!",
+                      screen_center,
+                      constants.FONT_TITLE_SCREEN,
+                      constants.COLOR_BLACK,
+                      back_color=None,
+                      center=True)
+
+            pygame.display.update()
+
+            # create legacy file
+            fileName = ("data/HallOfFame/" + PLAYER.creature.name_instance + "." +
+                        datetime.date.today().strftime("%Y%B%d") + ".txt")
+
+            # delete save file
+            file_exists = os.path.isfile(fileName)
+            save_exists = os.path.exists("data/savedata/savegame")
+
+            if file_exists:
+                os.remove(fileName)
+            if save_exists:
+                os.remove("data/savedata/savegame")
+
+            legacy_file = open(fileName, "a+")
+            legacy_file.write("******THIS CHARACTER WON!******" + "\n")
+            for msg, color in GAME.message_history:
+                legacy_file.write(msg + "\n")
+            legacy_file.write("----------\n")
+            # kick player to main menu
+            pygame.time.wait(2000)
 
 # AI
 #  .d888888  dP
@@ -847,7 +894,7 @@ def death_snake(monster):
 def death_mouse(mouse):
     """ On death, most monsters stop moving. """
     game_message(mouse.creature.name_instance +
-                 " is dead! Eat him for more health!", 
+                 " is dead! Eat him for more health!",
                  constants.COLOR_GREEN)
     mouse.animation = ASSETS.S_FLESH_02
     mouse.animation_key = "S_FLESH_02"
@@ -861,30 +908,37 @@ def death_player(player):
 
     # display game over
     SURFACE_MAIN.fill(constants.COLOR_BLACK)
-    screen_center = (int(constants.CAMERA_WIDTH*0.5), int(constants.CAMERA_HEIGHT*0.5))
+    screen_center = (int(constants.CAMERA_WIDTH*0.5),
+                     int(constants.CAMERA_HEIGHT*0.5))
     draw_text(SURFACE_MAIN,
-        "YOU DIED",
-        screen_center,
-        constants.FONT_TITLE_SCREEN,
-        constants.COLOR_RED, 
-        back_color=None,
-        center=True)
+              "YOU DIED",
+              screen_center,
+              constants.FONT_TITLE_SCREEN,
+              constants.COLOR_RED,
+              back_color=None,
+              center=True)
 
     pygame.display.update()
 
-    pygame.time.wait(2000)
     # create legacy file
-    fileName = ("data/graveyard/" + PLAYER.creature.name_instance + "." + 
-        datetime.date.today().strftime("%Y%B%d") + ".txt")
+    fileName = ("data/graveyard/" + PLAYER.creature.name_instance + "." +
+                datetime.date.today().strftime("%Y%B%d") + ".txt")
+
+    # delete save file
+    file_exists = os.path.isfile(fileName)
+    save_exists = os.path.exists("data/savedata/savegame")
+
+    if file_exists:
+        os.remove(fileName)
+    if save_exists:
+        os.remove("data/savedata/savegame")
 
     legacy_file = open(fileName, "a+")
     for msg, color in GAME.message_history:
         legacy_file.write(msg + "\n")
     legacy_file.write("----------\n")
-    # delete save file
-    # if os.path.exists("data/savedata/savegame"):
-    #     os.remove("data/savedata/savegame")
     # kick player to main menu
+    pygame.time.wait(2000)
 
 # Map
 # 8888ba.88ba
@@ -901,29 +955,29 @@ def map_create():
     new_map = [[struc_Tile(True) for y in range(0, constants.MAP_HEIGHT)]
                for x in range(0, constants.MAP_WIDTH)]
     # for x in range(constants.MAP_WIDTH):
-        #     new_map[x][0].block_path = True
-        #     new_map[x][constants.MAP_HEIGHT - 1].block_path = True
-        # for y in range(constants.MAP_HEIGHT):
-        #     new_map[0][y].block_path = True
-        #     new_map[constants.MAP_WIDTH - 1][y].block_path = True
+    #     new_map[x][0].block_path = True
+    #     new_map[x][constants.MAP_HEIGHT - 1].block_path = True
+    # for y in range(constants.MAP_HEIGHT):
+    #     new_map[0][y].block_path = True
+    #     new_map[constants.MAP_WIDTH - 1][y].block_path = True
     # generate new room
     list_of_rooms = []
 
     for i in range(constants.MAP_MAX_NUM_ROOMS):
-        w = tcod.random_get_int(RAND_INSTANCE, 
-                                constants.ROOM_MIN_WIDTH, 
+        w = tcod.random_get_int(RAND_INSTANCE,
+                                constants.ROOM_MIN_WIDTH,
                                 constants.ROOM_MAX_WIDTH)
-        h = tcod.random_get_int(RAND_INSTANCE, 
-                                constants.ROOM_MIN_HEIGHT, 
+        h = tcod.random_get_int(RAND_INSTANCE,
+                                constants.ROOM_MIN_HEIGHT,
                                 constants.ROOM_MAX_HEIGHT)
-        x = tcod.random_get_int(RAND_INSTANCE, 
-                                constants.MAP_BORDER_WIDTH, 
+        x = tcod.random_get_int(RAND_INSTANCE,
+                                constants.MAP_BORDER_WIDTH,
                                 (constants.MAP_WIDTH - w - constants.MAP_BORDER_WIDTH - 1))
-        y = tcod.random_get_int(RAND_INSTANCE, 
-                                constants.MAP_BORDER_WIDTH, 
+        y = tcod.random_get_int(RAND_INSTANCE,
+                                constants.MAP_BORDER_WIDTH,
                                 (constants.MAP_HEIGHT - h - constants.MAP_BORDER_WIDTH - 1))
         # create the room
-        new_room = obj_Room((x,y), (w, h))
+        new_room = obj_Room((x, y), (w, h))
 
         # check for other intersecting rooms
         failed = False
@@ -936,7 +990,7 @@ def map_create():
             map_create_room(new_map, new_room)
             list_of_rooms.append(new_room)
             current_center = new_room.center
-            
+
             if len(list_of_rooms) > 1:
                 previous_center = list_of_rooms[-2].center
                 # dig the tunnels
@@ -944,7 +998,6 @@ def map_create():
 
     map_make_fov(new_map)
 
-    
     print("There are " + str(len(list_of_rooms)) + " rooms.")
 
     return new_map, list_of_rooms
@@ -964,7 +1017,7 @@ def map_place_objects(room_list):
         is_first_room = (room == room_list[0])
         is_last_room = (room == room_list[-1])
 
-        if is_first_room: 
+        if is_first_room:
             PLAYER.x, PLAYER.y = room.center
         if is_first_room and is_top_level:
             gen_portal(room.center)
@@ -974,9 +1027,11 @@ def map_place_objects(room_list):
         if is_last_room:
             if is_final_level:
                 gen_LAMP(room.center)
+            elif (is_top_level and len(PLAYER.container.inventory) > 20):
+                gen_reptile_Platino(room.center)
             else:
                 gen_stairs(room.center)
-        
+
         x = tcod.random_get_int(RAND_INSTANCE, room.x1 + 1, room.x2 - 1)
         y = tcod.random_get_int(RAND_INSTANCE, room.y1 + 1, room.y2 - 1)
 
@@ -1007,8 +1062,8 @@ def map_create_tunnels(coords1, coords2, new_map):
     maxY = max(y1, y2)
 
     if coin_flip:
-        if ((minX == x1 and minY == y1) or 
-            (minX == x2 and minY == y2)): 
+        if ((minX == x1 and minY == y1) or
+                (minX == x2 and minY == y2)):
             # 0 (min, min) x (max, min) y
             for x in range(minX, maxX + 1):
                 new_map[x][minY].block_path = False
@@ -1021,8 +1076,8 @@ def map_create_tunnels(coords1, coords2, new_map):
             for y in range(minY, maxY + 1):
                 new_map[minX][y].block_path = False
     else:
-        if ((minX == x1 and minY == y1) or 
-            (minX == x2 and minY == y2)): 
+        if ((minX == x1 and minY == y1) or
+                (minX == x2 and minY == y2)):
             # 1 (min, min) y (min, max) x
             for x in range(minX, maxX + 1):
                 new_map[x][maxY].block_path = False
@@ -1156,14 +1211,14 @@ def draw_game():
     CAMERA.update(PLAYER)
 
     # display_rect = pygame.Rect(
-    #     (0 * constants.CELL_WIDTH, 0 * constants.CELL_HEIGHT), 
+    #     (0 * constants.CELL_WIDTH, 0 * constants.CELL_HEIGHT),
     #     (constants.CAMERA_WIDTH, constants.CAMERA_HEIGHT))
 
     # draw the map
     draw_map(GAME.current_map)
 
     # draw all objects
-    for obj in sorted(GAME.current_objects, key = lambda obj: obj.depth, reverse = True):
+    for obj in sorted(GAME.current_objects, key=lambda obj: obj.depth, reverse=True):
         obj.draw()
 
     SURFACE_MAIN.blit(SURFACE_MAP, (0, 0), CAMERA.rect)
@@ -1185,11 +1240,15 @@ def draw_map(map_to_draw):
     render_w_max = cam_x + int(display_map_w / 2)
     render_h_max = cam_y + int(display_map_h / 2)
 
-    if render_h_min < 0: render_h_min = 0
-    if render_w_min < 0: render_w_min = 0
+    if render_h_min < 0:
+        render_h_min = 0
+    if render_w_min < 0:
+        render_w_min = 0
 
-    if render_w_max > constants.MAP_WIDTH : render_w_max = constants.MAP_WIDTH
-    if render_h_max > constants.MAP_HEIGHT: render_h_max = constants.MAP_HEIGHT
+    if render_w_max > constants.MAP_WIDTH:
+        render_w_max = constants.MAP_WIDTH
+    if render_h_max > constants.MAP_HEIGHT:
+        render_h_max = constants.MAP_HEIGHT
 
     for x in range(render_w_min, render_w_max):
         for y in range(render_h_min, render_h_max):
@@ -1236,8 +1295,8 @@ def draw_messages():
 
     text_height = helper_text_height(constants.FONT_MESSAGE_TEXT)
 
-    start_y = (constants.CAMERA_HEIGHT - 
-        (constants.NUM_MESSAGES * text_height))
+    start_y = (constants.CAMERA_HEIGHT -
+               (constants.NUM_MESSAGES * text_height))
 
     for i, (message, color) in enumerate(to_draw):
         draw_text(SURFACE_MAIN,
@@ -1374,7 +1433,7 @@ def cast_lightning(caster, T_damage_maxrange=(10, 5)):
     # TODO prompt the caster for a tile
     # if caster == PLAYER:
     menu_return = menu_tile_select(coords_origin=caster_location,
-                                   max_range=m_range, 
+                                   max_range=m_range,
                                    penetrate_walls=False)
     # else:
     #   # TODO create AI function for enemy targeting system.
@@ -1449,25 +1508,25 @@ def cast_confusion(caster, num_turns=5):
 
 
 # UI
-# dP     dP dP 
-# 88     88 88 
-# 88     88 88 
-# 88     88 88 
-# Y8.   .8P 88 
-# `Y88888P' dP 
+# dP     dP dP
+# 88     88 88
+# 88     88 88
+# 88     88 88
+# Y8.   .8P 88
+# `Y88888P' dP
 
 
 class ui_Button():
-    def __init__(self, 
-            surface, 
-            size, 
-            center_coords = (0, 0), 
-            font = constants.FONT_DEBUG_MESSAGE,
-            button_text = "",
-            color_box_mouseover = constants.COLOR_RED,
-            color_box_default = constants.COLOR_GREEN,
-            color_text_mouseover = constants.COLOR_GREY,
-            color_text_default = constants.COLOR_BLACK):
+    def __init__(self,
+                 surface,
+                 size,
+                 center_coords=(0, 0),
+                 font=constants.FONT_DEBUG_MESSAGE,
+                 button_text="",
+                 color_box_mouseover=constants.COLOR_RED,
+                 color_box_default=constants.COLOR_GREEN,
+                 color_text_mouseover=constants.COLOR_GREY,
+                 color_text_default=constants.COLOR_BLACK):
         self.surface = surface
         self.size = size
         self.center_coords = center_coords
@@ -1496,7 +1555,8 @@ class ui_Button():
 
         for event in local_events:
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1: mouse_clicked = True
+                if event.button == 1:
+                    mouse_clicked = True
 
         if mouse_over and mouse_clicked:
             return True
@@ -1510,26 +1570,26 @@ class ui_Button():
 
     def draw(self):
         pygame.draw.rect(self.surface, self.current_c_box, self.rect)
-        draw_text(display_surface = self.surface,
-              text_to_display = self.button_text,
-              T_coords = self.center_coords,
-              text_font = self.font,
-              text_color = self.current_c_text,
-              back_color=False,
-              center=True)
+        draw_text(display_surface=self.surface,
+                  text_to_display=self.button_text,
+                  T_coords=self.center_coords,
+                  text_font=self.font,
+                  text_color=self.current_c_text,
+                  back_color=False,
+                  center=True)
 
 
 class ui_Slider():
-    def __init__(self, 
-            surface, 
-            size, 
-            center_coords = (0, 0),
-            c_bg = constants.COLOR_BLACK,
-            c_fg = constants.COLOR_GREEN,
-            c_bg_mo = constants.COLOR_GREY,
-            c_fg_mo = constants.COLOR_RED,
-            parameter_value = 0.5
-            ):
+    def __init__(self,
+                 surface,
+                 size,
+                 center_coords=(0, 0),
+                 c_bg=constants.COLOR_BLACK,
+                 c_fg=constants.COLOR_GREEN,
+                 c_bg_mo=constants.COLOR_GREY,
+                 c_fg_mo=constants.COLOR_RED,
+                 parameter_value=0.5
+                 ):
         self.surface = surface
         self.size = size
         self.center_coords = center_coords
@@ -1546,7 +1606,7 @@ class ui_Slider():
         self.rect_bg.center = self.center_coords
 
         self.rect_fg = pygame.Rect(
-            (0, 0), 
+            (0, 0),
             (self.rect_bg.width * self.current_val, self.rect_bg.h))
         self.rect_fg.topleft = self.rect_bg.topleft
 
@@ -1554,7 +1614,7 @@ class ui_Slider():
             (0, 0),
             (20, self.rect_bg.h + 4))
         self.grip_tab.center = (self.rect_fg.right, self.rect_bg.centery)
-    
+
     def update(self, player_input):
         mouse_down = pygame.mouse.get_pressed()[0]
 
@@ -1565,7 +1625,7 @@ class ui_Slider():
                       mouse_x <= self.rect_bg.right and
                       mouse_y >= self.rect_bg.top and
                       mouse_y <= self.rect_bg.bottom)
-        
+
         if mouse_over:
             self.current_c_bg = self.c_bg_mo
             self.current_c_fg = self.c_fg_mo
@@ -1574,13 +1634,13 @@ class ui_Slider():
             self.current_c_fg = self.c_fg
 
         if mouse_down and mouse_over:
-            self.current_val = (float(mouse_x) - float(self.rect_bg.left))/self.rect_bg.width
+            self.current_val = (
+                float(mouse_x) - float(self.rect_bg.left))/self.rect_bg.width
             self.rect_fg.width = self.rect_bg.width * self.current_val
             self.grip_tab.center = (self.rect_fg.right, self.rect_bg.centery)
 
         return self.current_val
 
-    
     def draw(self):
         # draw background rect
         pygame.draw.rect(self.surface, self.current_c_bg, self.rect_bg)
@@ -1588,7 +1648,6 @@ class ui_Slider():
         pygame.draw.rect(self.surface, self.current_c_fg, self.rect_fg)
         # draw slider tab
         pygame.draw.rect(self.surface, constants.COLOR_BLACK, self.grip_tab)
-
 
 
 # Menus
@@ -1619,45 +1678,45 @@ def menu_main():
     quit_button_y = options_button_y + y_offset
 
     continue_game_button = ui_Button(
-            surface=SURFACE_MAIN, 
-            size = button_size, 
-            center_coords = (title_x, continue_button_y), 
-            button_text = "Continue",
-            color_box_mouseover = constants.COLOR_RED,
-            color_box_default = constants.COLOR_GREEN,
-            color_text_mouseover = constants.COLOR_GREY,
-            color_text_default = constants.COLOR_BLACK)
+        surface=SURFACE_MAIN,
+        size=button_size,
+        center_coords=(title_x, continue_button_y),
+        button_text="Continue",
+        color_box_mouseover=constants.COLOR_RED,
+        color_box_default=constants.COLOR_GREEN,
+        color_text_mouseover=constants.COLOR_GREY,
+        color_text_default=constants.COLOR_BLACK)
     new_game_button = ui_Button(
-            surface=SURFACE_MAIN, 
-            size = button_size, 
-            center_coords = (title_x, new_game_button_y), 
-            button_text = "New Game",
-            color_box_mouseover = constants.COLOR_RED,
-            color_box_default = constants.COLOR_GREEN,
-            color_text_mouseover = constants.COLOR_GREY,
-            color_text_default = constants.COLOR_BLACK)
+        surface=SURFACE_MAIN,
+        size=button_size,
+        center_coords=(title_x, new_game_button_y),
+        button_text="New Game",
+        color_box_mouseover=constants.COLOR_RED,
+        color_box_default=constants.COLOR_GREEN,
+        color_text_mouseover=constants.COLOR_GREY,
+        color_text_default=constants.COLOR_BLACK)
     options_button = ui_Button(
-            surface=SURFACE_MAIN, 
-            size = button_size, 
-            center_coords = (title_x, options_button_y), 
-            button_text = "Options",
-            color_box_mouseover = constants.COLOR_RED,
-            color_box_default = constants.COLOR_GREEN,
-            color_text_mouseover = constants.COLOR_GREY,
-            color_text_default = constants.COLOR_BLACK)
+        surface=SURFACE_MAIN,
+        size=button_size,
+        center_coords=(title_x, options_button_y),
+        button_text="Options",
+        color_box_mouseover=constants.COLOR_RED,
+        color_box_default=constants.COLOR_GREEN,
+        color_text_mouseover=constants.COLOR_GREY,
+        color_text_default=constants.COLOR_BLACK)
     quit_button = ui_Button(
-            surface=SURFACE_MAIN, 
-            size = button_size, 
-            center_coords = (title_x, quit_button_y), 
-            button_text = "Quit Game",
-            color_box_mouseover = constants.COLOR_RED,
-            color_box_default = constants.COLOR_GREEN,
-            color_text_mouseover = constants.COLOR_GREY,
-            color_text_default = constants.COLOR_BLACK)
+        surface=SURFACE_MAIN,
+        size=button_size,
+        center_coords=(title_x, quit_button_y),
+        button_text="Quit Game",
+        color_box_mouseover=constants.COLOR_RED,
+        color_box_default=constants.COLOR_GREEN,
+        color_text_mouseover=constants.COLOR_GREY,
+        color_text_default=constants.COLOR_BLACK)
 
     pygame.mixer.music.load(ASSETS.music_background)
     pygame.mixer.music.play(-1)
-    
+
     while menu_running:
 
         list_of_events = pygame.event.get()
@@ -1699,17 +1758,17 @@ def menu_main():
                 break
         elif quit_button.update(game_input):
             break
-        
+
         # draw menu
         SURFACE_MAIN.blit(ASSETS.I_MAIN_MENU_BG, (0, 0))
 
-        draw_text(display_surface = SURFACE_MAIN,
-                text_to_display = title_text,
-                T_coords = (title_x, title_y),
-                text_font = constants.FONT_TITLE_SCREEN,
-                text_color = constants.COLOR_RED,
-                back_color=constants.COLOR_BLACK,
-                center=True)
+        draw_text(display_surface=SURFACE_MAIN,
+                  text_to_display=title_text,
+                  T_coords=(title_x, title_y),
+                  text_font=constants.FONT_TITLE_SCREEN,
+                  text_color=constants.COLOR_RED,
+                  back_color=constants.COLOR_BLACK,
+                  center=True)
 
         continue_game_button.draw()
         new_game_button.draw()
@@ -1718,7 +1777,7 @@ def menu_main():
 
         # update surfaces
         pygame.display.update()
-    
+
     pygame.quit()
 
 
@@ -1730,7 +1789,8 @@ def menu_options():
     settings_menu_height = 200
     settings_menu_bg_color = constants.COLOR_GREY
 
-    window_center = (int(constants.CAMERA_WIDTH*0.5), int(constants.CAMERA_HEIGHT*0.5))
+    window_center = (int(constants.CAMERA_WIDTH*0.5),
+                     int(constants.CAMERA_HEIGHT*0.5))
 
     settings_menu_surface = pygame.Surface(
         (settings_menu_width, settings_menu_height))
@@ -1741,7 +1801,7 @@ def menu_options():
     settings_menu_rect.center = window_center
 
     settings_menu_surface.fill(settings_menu_bg_color)
-    
+
     # SLIDER VARS
     slider_x = settings_menu_rect.centerx
     sound_effect_slider_y = settings_menu_rect.top + 35
@@ -1757,36 +1817,36 @@ def menu_options():
     button_font = constants.FONT_DEBUG_MESSAGE
 
     sound_effect_slider = ui_Slider(
-        surface = SURFACE_MAIN, 
-        size = (125, 15), 
-        center_coords = (slider_x, sound_effect_slider_y),
-        c_bg = constants.COLOR_BLACK,
-        c_fg = constants.COLOR_GREEN,
-        c_bg_mo = constants.COLOR_BLACK,
-        c_fg_mo = constants.COLOR_RED,
+        surface=SURFACE_MAIN,
+        size=(125, 15),
+        center_coords=(slider_x, sound_effect_slider_y),
+        c_bg=constants.COLOR_BLACK,
+        c_fg=constants.COLOR_GREEN,
+        c_bg_mo=constants.COLOR_BLACK,
+        c_fg_mo=constants.COLOR_RED,
         parameter_value=PREFERENCES.vol_sound
-        )
+    )
 
     music_slider = ui_Slider(
-        surface = SURFACE_MAIN, 
-        size = (125, 15), 
-        center_coords = (slider_x, music_slider_y),
-        c_bg = constants.COLOR_BLACK,
-        c_fg = constants.COLOR_GREEN,
-        c_bg_mo = constants.COLOR_BLACK,
-        c_fg_mo = constants.COLOR_RED,
+        surface=SURFACE_MAIN,
+        size=(125, 15),
+        center_coords=(slider_x, music_slider_y),
+        c_bg=constants.COLOR_BLACK,
+        c_fg=constants.COLOR_GREEN,
+        c_bg_mo=constants.COLOR_BLACK,
+        c_fg_mo=constants.COLOR_RED,
         parameter_value=PREFERENCES.vol_music
-        )
+    )
 
     button_save = ui_Button(
-            surface = SURFACE_MAIN, 
-            size = (70, 20), 
-            center_coords = (slider_x, button_save_y), 
-            button_text = "Save",
-            color_box_mouseover = constants.COLOR_RED,
-            color_box_default = constants.COLOR_DGREY,
-            color_text_mouseover = constants.COLOR_BLACK,
-            color_text_default = constants.COLOR_BLACK)
+        surface=SURFACE_MAIN,
+        size=(70, 20),
+        center_coords=(slider_x, button_save_y),
+        button_text="Save",
+        color_box_mouseover=constants.COLOR_RED,
+        color_box_default=constants.COLOR_DGREY,
+        color_text_mouseover=constants.COLOR_BLACK,
+        color_text_default=constants.COLOR_BLACK)
 
     while not menu_close:
 
@@ -1801,7 +1861,7 @@ def menu_options():
                 return False
             elif event.type == pygame.KEYDOWN:
                 if (event.key == pygame.K_ESCAPE or
-                    event.key == pygame.K_TAB):
+                        event.key == pygame.K_TAB):
                     menu_close = True
             # elif event.type == pygame.MOUSEBUTTONDOWN:
 
@@ -1828,22 +1888,22 @@ def menu_options():
         SURFACE_MAIN.blit(settings_menu_surface, settings_menu_rect.topleft)
 
         draw_text(
-            display_surface = SURFACE_MAIN, 
-            text_to_display = "SOUND", 
-            T_coords = (slider_x, sound_effect_text_y), 
-            text_font = constants.FONT_DEBUG_MESSAGE, 
-            text_color = constants.COLOR_BLACK, 
-            back_color=constants.COLOR_GREY, 
+            display_surface=SURFACE_MAIN,
+            text_to_display="SOUND",
+            T_coords=(slider_x, sound_effect_text_y),
+            text_font=constants.FONT_DEBUG_MESSAGE,
+            text_color=constants.COLOR_BLACK,
+            back_color=constants.COLOR_GREY,
             center=True)
         sound_effect_slider.draw()
 
         draw_text(
-            display_surface = SURFACE_MAIN, 
-            text_to_display = "MUSIC", 
-            T_coords = (slider_x, music_text_y), 
-            text_font = constants.FONT_DEBUG_MESSAGE, 
-            text_color = constants.COLOR_BLACK, 
-            back_color=constants.COLOR_GREY, 
+            display_surface=SURFACE_MAIN,
+            text_to_display="MUSIC",
+            T_coords=(slider_x, music_text_y),
+            text_font=constants.FONT_DEBUG_MESSAGE,
+            text_color=constants.COLOR_BLACK,
+            back_color=constants.COLOR_GREY,
             center=True)
         music_slider.draw()
 
@@ -1945,11 +2005,11 @@ def menu_inventory():
                         item_interact = "use"
             if event.type == pygame.MOUSEBUTTONDOWN:
                 # buttons:
-                    # 1 == lmb
-                    # 2 = mmb
-                    # 3 == rmb
-                    # 4 == scroll up
-                    # 5 == scroll down
+                # 1 == lmb
+                # 2 = mmb
+                # 3 == rmb
+                # 4 == scroll up
+                # 5 == scroll down
                 if event.button == 1:
                     if (mouse_in_window and
                             (mouse_line_selection <= len(print_list) - 1)):
@@ -2075,14 +2135,14 @@ def menu_tile_select(coords_origin=None, max_range=None, radius=None,
         CAMERA.update(PLAYER)
 
         # display_rect = pygame.Rect(
-        #     (0 * constants.CELL_WIDTH, 0 * constants.CELL_HEIGHT), 
+        #     (0 * constants.CELL_WIDTH, 0 * constants.CELL_HEIGHT),
         #     (constants.CAMERA_WIDTH, constants.CAMERA_HEIGHT))
 
         # draw the map
         draw_map(GAME.current_map)
 
         # draw all objects
-        for obj in sorted(GAME.current_objects, key = lambda obj: obj.depth, reverse = True):
+        for obj in sorted(GAME.current_objects, key=lambda obj: obj.depth, reverse=True):
             obj.draw()
 
         # draw rectangle at mouse position on top of game
@@ -2124,14 +2184,14 @@ def gen_player(coords):
     x, y = coords
     container_com = com_Container(volume=10.0, inventory=[])
     creature_com = com_Creature(
-        "greg", 
+        "greg",
         base_atk=4,
         death_function=death_player
-        )
+    )
     player = obj_Actor(x, y, "python",
                        animation_key="A_PLAYER",
                        animation_speed=1.0,
-                       depth = constants.DEPTH_PLAYER, 
+                       depth=constants.DEPTH_PLAYER,
                        creature=creature_com,
                        container=container_com)
     return player
@@ -2139,21 +2199,21 @@ def gen_player(coords):
 
 # SPECIAL
 
-def gen_stairs(coords, downwards = True):
+def gen_stairs(coords, downwards=True):
     x, y = coords
 
     if downwards:
-        stairs_com = com_Stairs(downwards) 
-        stairs = obj_Actor(x, y, "stairs", 
-            animation_key = "S_STAIRS_DOWN",
-            depth=constants.DEPTH_BKGD,
-            stairs = stairs_com)
+        stairs_com = com_Stairs(downwards)
+        stairs = obj_Actor(x, y, "stairs",
+                           animation_key="S_STAIRS_DOWN",
+                           depth=constants.DEPTH_BKGD,
+                           stairs=stairs_com)
     else:
-        stairs_com = com_Stairs(downwards) 
-        stairs = obj_Actor(x, y, "stairs", 
-            animation_key = "S_STAIRS_UP",
-            depth=constants.DEPTH_BKGD,
-            stairs = stairs_com)
+        stairs_com = com_Stairs(downwards)
+        stairs = obj_Actor(x, y, "stairs",
+                           animation_key="S_STAIRS_UP",
+                           depth=constants.DEPTH_BKGD,
+                           stairs=stairs_com)
 
     GAME.current_objects.append(stairs)
 
@@ -2161,13 +2221,13 @@ def gen_stairs(coords, downwards = True):
 def gen_portal(coords):
     x, y = coords
 
-    portal_com = com_ExitPortal() 
+    portal_com = com_ExitPortal()
     portal = obj_Actor(x, y, "exit portal",
-        animation_key = "S_PORTAL_CLOSED",
-        animation_speed=0.2,
-        depth=constants.DEPTH_BKGD,
-        state="CLOSED",
-        exitportal= portal_com)
+                       animation_key="S_PORTAL_CLOSED",
+                       animation_speed=0.2,
+                       depth=constants.DEPTH_BKGD,
+                       state="CLOSED",
+                       exitportal=portal_com)
 
     GAME.current_objects.append(portal)
 
@@ -2179,7 +2239,7 @@ def gen_LAMP(coords):
 
     return_object = obj_Actor(x, y, "THE LAMP",
                               animation_key="S_MAGIC_LAMP",
-                              depth = constants.DEPTH_ITEM, 
+                              depth=constants.DEPTH_ITEM,
                               item=item_com)
 
     GAME.current_objects.append(return_object)
@@ -2216,7 +2276,7 @@ def gen_scroll_lightning(coords):
 
     return_object = obj_Actor(x, y, "lightning scroll",
                               animation_key="S_SCROLL_YELLOW",
-                              depth = constants.DEPTH_ITEM, 
+                              depth=constants.DEPTH_ITEM,
                               item=item_com)
 
     return return_object
@@ -2234,7 +2294,7 @@ def gen_scroll_fireball(coords):
 
     return_object = obj_Actor(x, y, "fireball scroll",
                               animation_key="S_SCROLL_RED",
-                              depth = constants.DEPTH_ITEM,
+                              depth=constants.DEPTH_ITEM,
                               item=item_com)
 
     return return_object
@@ -2250,7 +2310,7 @@ def gen_scroll_confusion(coords):
 
     return_object = obj_Actor(x, y, "confusion scroll",
                               animation_key="S_SCROLL_BLANK",
-                              depth = constants.DEPTH_ITEM,
+                              depth=constants.DEPTH_ITEM,
                               item=item_com)
 
     return return_object
@@ -2266,7 +2326,7 @@ def gen_weapon_sword(coords):
     return_object = obj_Actor(x, y,
                               "sword",
                               animation_key="S_SWORD",
-                              depth = constants.DEPTH_ITEM,
+                              depth=constants.DEPTH_ITEM,
                               equipment=equipment_com)
     return return_object
 
@@ -2281,7 +2341,7 @@ def gen_armor_shield(coords):
     return_object = obj_Actor(x, y,
                               "shield",
                               animation_key="S_SHIELD",
-                              depth = constants.DEPTH_ITEM,
+                              depth=constants.DEPTH_ITEM,
                               equipment=equipment_com)
     return return_object
 
@@ -2307,21 +2367,21 @@ def gen_snake_anaconda(coords):
 
     max_health = tcod.random_get_int(RAND_INSTANCE, 5, 10)
     base_attack = tcod.random_get_int(RAND_INSTANCE, 1, 3)
-    base_defense = 0 #tcod.random_get_int(RAND_INSTANCE, 0, 1)
+    base_defense = 0  # tcod.random_get_int(RAND_INSTANCE, 0, 1)
 
     generated_name = tcod.namegen_generate("Celtic female")
 
     # item_com1 = com_Item(value=4, use_function=cast_heal)
-    creature_com = com_Creature(generated_name, 
-                                base_atk=base_attack, 
-                                base_def=base_defense, 
+    creature_com = com_Creature(generated_name,
+                                base_atk=base_attack,
+                                base_def=base_defense,
                                 hp=max_health,
                                 death_function=death_snake)
     ai_com = ai_Chase()
     snake = obj_Actor(x, y, "anaconda",
                       animation_key="A_SNAKE_01",
                       animation_speed=1.0,
-                      depth = constants.DEPTH_CREATURE,
+                      depth=constants.DEPTH_CREATURE,
                       creature=creature_com,
                       ai=ai_com)
 
@@ -2334,22 +2394,21 @@ def gen_snake_cobra(coords):
 
     max_health = tcod.random_get_int(RAND_INSTANCE, 15, 20)
     base_attack = tcod.random_get_int(RAND_INSTANCE, 3, 6)
-    base_defense = 0 #tcod.random_get_int(RAND_INSTANCE, 0, 1)
+    base_defense = 0  # tcod.random_get_int(RAND_INSTANCE, 0, 1)
 
     generated_name = tcod.namegen_generate("Celtic male")
 
-
     # item_com1 = com_Item(value=4, use_function=cast_heal)
-    creature_com = com_Creature(generated_name, 
-                                base_atk=base_attack, 
-                                base_def=base_defense, 
+    creature_com = com_Creature(generated_name,
+                                base_atk=base_attack,
+                                base_def=base_defense,
                                 hp=max_health,
                                 death_function=death_snake)
     ai_com = ai_Chase()
     cobra = obj_Actor(x, y, "cobra",
                       animation_key="A_SNAKE_02",
                       animation_speed=1.0,
-                      depth = constants.DEPTH_CREATURE,
+                      depth=constants.DEPTH_CREATURE,
                       creature=creature_com,
                       ai=ai_com)
 
@@ -2362,25 +2421,24 @@ def gen_mouse(coords):
 
     max_health = 1
     base_attack = 0
-    base_defense = 0 #tcod.random_get_int(RAND_INSTANCE, 0, 1)
+    base_defense = 0  # tcod.random_get_int(RAND_INSTANCE, 0, 1)
 
     generated_name = tcod.namegen_generate("Celtic male")
 
-
     # item_com1 = com_Item(value=4, use_function=cast_heal)
-    creature_com = com_Creature(generated_name, 
-                                base_atk=base_attack, 
-                                base_def=base_defense, 
+    creature_com = com_Creature(generated_name,
+                                base_atk=base_attack,
+                                base_def=base_defense,
                                 hp=max_health,
                                 death_function=death_mouse)
     ai_com = ai_Flee()
 
-    item_com = com_Item(use_function = cast_heal, 
-        value=2)
+    item_com = com_Item(use_function=cast_heal,
+                        value=2)
     mouse = obj_Actor(x, y, "mouse",
                       animation_key="A_MOUSE",
                       animation_speed=1.0,
-                      depth = constants.DEPTH_CREATURE,
+                      depth=constants.DEPTH_CREATURE,
                       creature=creature_com,
                       item=item_com,
                       ai=ai_com)
@@ -2388,6 +2446,31 @@ def gen_mouse(coords):
     return mouse
 
 
+def gen_reptile_Platino(coords):
+    # create an enemy
+    x, y = coords
+
+    max_health = tcod.random_get_int(RAND_INSTANCE, 15, 20)
+    base_attack = tcod.random_get_int(RAND_INSTANCE, 3, 6)
+    base_defense = 0  # tcod.random_get_int(RAND_INSTANCE, 0, 1)
+
+    generated_name = tcod.namegen_generate("Celtic male")
+
+    # item_com1 = com_Item(value=4, use_function=cast_heal)
+    creature_com = com_Creature(generated_name,
+                                base_atk=base_attack,
+                                base_def=base_defense,
+                                hp=max_health,
+                                death_function=death_snake)
+    ai_com = ai_Chase()
+    platino = obj_Actor(x, y, "platino",
+                        animation_key="A_PLATINO",
+                        animation_speed=1.0,
+                        depth=constants.DEPTH_CREATURE,
+                        creature=creature_com,
+                        ai=ai_com)
+
+    return platino
 
 # Game
 #  .88888.
@@ -2424,7 +2507,8 @@ def game_main_loop():
             if obj.exitportal:
                 obj.exitportal.update()
 
-        if PLAYER.state is "STATUS_DEAD":
+        if (PLAYER.state == "STATUS_DEAD" or
+                PLAYER.state == "STATUS_WIN"):
             game_quit = True
 
         # draw the game
@@ -2458,11 +2542,13 @@ def game_initialize():
     # tcod.namegen_parse("data/namegen/jice_fantasy.cfg")
     # tcod.namegen_parse("data/namegen/jice_mesopotamian.cfg")
 
-    SURFACE_MAIN = pygame.display.set_mode((constants.CAMERA_WIDTH, 
-                                           constants.CAMERA_HEIGHT))
+    SURFACE_MAIN = pygame.display.set_mode(
+        (constants.CAMERA_WIDTH, constants.CAMERA_HEIGHT)
+        # pygame.HWSURFACE | pygame.RESIZABLE
+    )
 
     SURFACE_MAP = pygame.Surface((constants.MAP_WIDTH*constants.CELL_WIDTH,
-                                 constants.MAP_HEIGHT*constants.CELL_HEIGHT))
+                                  constants.MAP_HEIGHT*constants.CELL_HEIGHT))
 
     CAMERA = obj_Camera()
 
@@ -2482,7 +2568,7 @@ def game_handle_keys():
     events_list = pygame.event.get()
 
     # Check for mod key
-    MOD_KEY = (keys_list[pygame.K_RSHIFT] or 
+    MOD_KEY = (keys_list[pygame.K_RSHIFT] or
                keys_list[pygame.K_LSHIFT])
 
     for event in events_list:
@@ -2531,6 +2617,8 @@ def game_handle_keys():
                 for obj in list_of_objs:
                     if obj.stairs:
                         obj.stairs.use()
+                    if obj.exitportal:
+                        obj.exitportal.use()
             # if event.key == pygame.K_SPACE:
             #     GAME.transition_next()
             #     # PLAYER.x, PLAYER.y = GAME.current_rooms[0].center
@@ -2548,7 +2636,7 @@ def game_message(game_msg, msg_color=constants.COLOR_GREY):
 def game_new():
 
     global GAME, PLAYER
-    
+
     GAME = obj_Game()
 
     PLAYER = gen_player(GAME.current_rooms[0].center)
@@ -2595,7 +2683,6 @@ def game_load():
                 objec.animation_init()
     # for obj in PLAYER.container.inventory:
     #     obj.animation_init()
-        
 
     map_make_fov(GAME.current_map)
 
@@ -2633,7 +2720,7 @@ def preferences_load():
 if __name__ == '__main__':
     menu_main()
 
-
+# End
 #  88888888b 888888ba  888888ba
 #  88        88    `8b 88    `8b
 # a88aaaa    88     88 88     88
